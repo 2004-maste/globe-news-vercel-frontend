@@ -1,0 +1,113 @@
+{
+    "app": {
+        "name": "Globe News",
+        "version": "5.1.0",
+        "description": "Global news aggregator with AI-powered summaries",
+        "author": "Master-V Labs",
+        "repository": "https://github.com/yourusername/globe-news"
+    },
+    "api": {
+        "backend_url": "http://localhost:8000",
+        "timeout": 10,
+        "retry_attempts": 3,
+        "endpoints": {
+            "health": "/api/v1/health/status",
+            "articles": "/api/v1/articles",
+            "categories": "/api/v1/categories",
+            "breaking": "/api/v1/articles/breaking",
+            "stats": "/api/v1/fetcher/stats",
+            "sources": "/api/v1/fetcher/sources",
+            "fetch_now": "/api/v1/fetcher/fetch-now",
+            "summarizer_health": "/api/v1/summarizer/health",
+            "article_summary": "/api/v1/summarizer/articles/{id}/summary",
+            "generate_summary": "/api/v1/summarizer/articles/{id}/summarize"
+        }
+    },
+    "features": {
+        "ai_summaries": true,
+        "multi_language": true,
+        "real_time_updates": true,
+        "breaking_news": true,
+        "search_functionality": true,
+        "responsive_design": true,
+        "dark_mode": false
+    },
+    "languages": [
+        {
+            "code": "en",
+            "name": "English",
+            "default": true
+        },
+        {
+            "code": "rw",
+            "name": "Kinyarwanda",
+            "default": false
+        }
+    ],
+    "categories": [
+        "World",
+        "Technology",
+        "Business",
+        "Science",
+        "Entertainment",
+        "Sports",
+        "Health",
+        "Politics",
+        "General"
+    ],
+    "rss_feeds": {
+        "en": [
+            "http://feeds.bbci.co.uk/news/rss.xml",
+            "http://feeds.bbci.co.uk/news/world/rss.xml",
+            "http://feeds.bbci.co.uk/news/technology/rss.xml",
+            "http://feeds.bbci.co.uk/news/business/rss.xml",
+            "http://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+        ],
+        "rw": [
+            "https://www.igihe.com/rss",
+            "https://www.newtimes.co.rw/section/editorial/rss",
+            "https://www.ktpress.rw/rss",
+            "https://rwandatoday.rw/rss",
+            "https://www.bbc.com/gahuza/rss.xml"
+        ]
+    },
+    "ui": {
+        "theme": {
+            "primary_color": "#3498db",
+            "secondary_color": "#2ecc71",
+            "accent_color": "#e74c3c",
+            "background_color": "#f8f9fa",
+            "text_color": "#2c3e50",
+            "border_radius": "15px"
+        },
+        "animations": {
+            "enabled": true,
+            "duration": "0.3s",
+            "easing": "cubic-bezier(0.4, 0, 0.2, 1)"
+        }
+    },
+    "update_settings": {
+        "auto_fetch_interval": 3600,
+        "breaking_news_refresh": 300,
+        "max_articles_per_fetch": 50,
+        "cache_duration": 600
+    },
+    "ai_summarizer": {
+        "enabled": true,
+        "model": "custom_text_generator",
+        "max_paragraphs": 6,
+        "min_content_length": 50,
+        "languages_supported": ["en", "rw"]
+    },
+    "search": {
+        "enabled": true,
+        "min_query_length": 3,
+        "max_results": 50,
+        "search_fields": ["title", "description", "content"]
+    },
+    "debug": {
+        "enabled": true,
+        "log_level": "INFO",
+        "show_api_errors": true
+    }
+}
