@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+
+{% block title %}Breaking News - Globe News{% endblock %}
+
+{% block breadcrumb %}
+<div class="container breadcrumb">
+    <a href="{{ url_for('index') }}">Home</a> &gt;
+    <span>Breaking News</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="breaking-news-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-bolt"></i> Breaking News
+        </h1>
+        <p class="page-subtitle">
+            Latest urgent news and developing stories from around the world.
+            <span class="badge bg-warning">Live Updates</span>
+        </p>
+        
+        <div class="breaking-stats">
+            <div class="stat-item">
+                <i class="fas fa-clock"></i>
+                <span>Last updated: <span id="lastUpdated">{{ "now"|datetimeformat("%I:%M %p") }}</span></span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-newspaper"></i>
+                <span>Total articles: <strong>{{ article_count }}</strong></span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-globe"></i>
+                <span>Last 24 hours</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breaking News Grid -->
+    {% if articles %}
+    <div class="breaking-articles-grid">
+        {% for article in articles %}
+        <div class="breaking-article-card {% if loop.first %}featured-breaking{% endif %}">
+            {% if article.url_to_image %}
+            <img src="{{ article.url_to_image }}" 
+                 alt="{{ article.title }}" 
+                 class="breaking-article-image"
+                 onerror="this.src='https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+            {% else %}
+            <div class="breaking-article-image-placeholder">
+                <i class="fas fa-bolt"></i>
+            </div>
+            {% endif %}
+            
+            <div class="breaking-badge">
+                <i class="fas fa-bolt"></i> BREAKING
+            </div>
+            
+            <div class="breaking-article-content">
+                <div class="breaking-article-meta">
+                    <span class="breaking-article-category">
+                        {{ article.category_name }}
+                    </span>
+                    <span class="breaking-article-time">
+                        <i class="far fa-clock"></i> {{ article.published_at|time_ago }}
+                    </span>
+                    <span class="breaking-article-language">
+                        {% if article.language == 'en' %}🇬🇧 EN{% else %}🇷🇼 RW{% endif %}
+                    </span>
+                </div>
+                
+                <h2 class="breaking-article-title">
+                    <a href="{{ url_for('article_detail', article_id=article.id) }}">
+                        {{ article.title }}
+                    </a>
+                </h2>
+                
+                <p class="breaking-article-description">
+                    {{ article.description|truncate(150) }}
+                </p>
+                
+                <div class="breaking-article-footer">
+                    <div class="breaking-article-source">
+                        <i class="fas fa-source"></i> {{ article.source }}
+                    </div>
+                    <a href="{{ url_for('article_detail', article_id=article.id) }}" class="breaking-read-more">
+                        Read Full Story <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Breaking News Summary -->
+    <div class="breaking-summary">
+        <h3 class="summary-title">
+            <i class="fas fa-chart-line"></i> Breaking News Summary
+        </h3>
+        <div class="summary-stats">
+            <div class="summary-stat">
+                <div class="stat-number">{{ articles|length }}</div>
+                <div class="stat-label">Breaking Stories</div>
+            </div>
+            <div class="summary-stat">
+                <div class="stat-number">
+                    {{ articles|selectattr('language', 'equalto', 'en')|list|length }}
+                </div>
+                <div class="stat-label">English News</div>
+            </div>
+            <div class="summary-stat">
+                <div class="stat-number">
+                    {{ articles|selectattr('language', 'equalto', 'rw')|list|length }}
+                </div>
+                <div class="stat-label">Kinyarwanda News</div>
+            </div>
+            <div class="summary-stat">
+                <div class="stat-number">
+                    {% set sources = articles|map(attribute='source')|list|unique %}
+                    {{ sources|list|length }}
+                </div>
+                <div class="stat-label">News Sources</div>
+            </div>
+        </div>
+        
+        <div class="summary-sources">
+            <h4>Sources covering breaking news:</h4>
+            <div class="source-tags">
+                {% for source in articles|map(attribute='source')|list|unique|sort %}
+                <span class="source-tag">{{ source }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- No Breaking News -->
+    <div class="no-breaking-news">
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <h3>No Breaking News Right Now</h3>
+            <p>There are no urgent breaking stories at the moment. Check back later for updates.</p>
+            <div class="empty-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-home"></i> Go to Homepage
+                </a>
+                <a href="{{ url_for('categories') }}" class="btn btn-secondary">
+                    <i class="fas fa-th-large"></i> Browse Categories
+                </a>
+            </div>
+        </div>
+        
+        <div class="recent-news-fallback">
+            <h4>Recent News Instead:</h4>
+            <div class="recent-articles">
+                {% for recent in articles|default([])|slice(0, 3) %}
+                <div class="recent-article">
+                    <a href="{{ url_for('article_detail', article_id=recent.id) }}" class="recent-title">
+                        {{ recent.title|truncate(60) }}
+                    </a>
+                    <div class="recent-meta">
+                        <span>{{ recent.source }}</span>
+                        <span>{{ recent.published_at|time_ago }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Auto-refresh Notice -->
+    <div class="refresh-notice">
+        <div class="notice-content">
+            <i class="fas fa-sync-alt"></i>
+            <div>
+                <strong>Breaking news auto-refreshes</strong>
+                <p>This page updates automatically with the latest breaking stories.</p>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="refreshBreakingNews()">
+                <i class="fas fa-redo"></i> Refresh Now
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh breaking news
+    let refreshInterval;
+    
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            refreshBreakingNews();
+        }, 300000); // 5 minutes
+    }
+    
+    function refreshBreakingNews() {
+        // Show loading state
+        const refreshBtn = document.querySelector('[onclick="refreshBreakingNews()"]');
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+        refreshBtn.disabled = true;
+        
+        // Reload the page
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+        
+        // Restore button after 5 seconds
+        setTimeout(() => {
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.disabled = false;
+        }, 5000);
+    }
+    
+    // Update last updated time
+    function updateLastUpdated() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        document.getElementById('lastUpdated').textContent = timeString;
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Start auto-refresh
+        startAutoRefresh();
+        
+        // Update time
+        updateLastUpdated();
+        setInterval(updateLastUpdated, 60000); // Update every minute
+        
+        // Add breaking news animations
+        const breakingCards = document.querySelectorAll('.breaking-article-card');
+        breakingCards.forEach((card, index) => {
+            // Add staggered animation
+            card.style.animationDelay = `${index * 0.1}s`;
+            
+            // Add pulse animation for featured breaking news
+            if (card.classList.contains('featured-breaking')) {
+                setInterval(() => {
+                    card.classList.add('pulse');
+                    setTimeout(() => card.classList.remove('pulse'), 1000);
+                }, 5000);
+            }
+        });
+        
+        // Keyboard shortcut for refresh (Ctrl/Cmd + R)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                refreshBreakingNews();
+            }
+        });
+    });
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    });
+</script>
+
+<style>
+    .breaking-news-page {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #f59e0b;
+    }
+    
+    .page-subtitle {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .breaking-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        background: #fef3c7;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #92400e;
+        font-size: 0.9rem;
+    }
+    
+    .breaking-articles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .breaking-article-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 2px solid #f59e0b;
+        position: relative;
+        transition: transform 0.3s ease;
+    }
+    
+    .breaking-article-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(245, 158, 11, 0.2);
+    }
+    
+    .featured-breaking {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .breaking-article-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+    }
+    
+    .featured-breaking .breaking-article-image {
+        height: 300px;
+    }
+    
+    .breaking-article-image-placeholder {
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 4rem;
+    }
+    
+    .breaking-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: #ef4444;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .breaking-article-content {
+        padding: 1.5rem;
+    }
+    
+    .breaking-article-meta {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        color: #6b7280;
+        flex-wrap: wrap;
+    }
+    
+    .breaking-article-category {
+        background: #3b82f6;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    
+    .breaking-article-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+    
+    .breaking-article-title a {
+        color: #1f2937;
+        text-decoration: none;
+    }
+    
+    .breaking-article-title a:hover {
+        color: #3b82f6;
+    }
+    
+    .breaking-article-description {
+        color: #6b7280;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+    
+    .breaking-article-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .breaking-article-source {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    .breaking-read-more {
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .breaking-summary {
+        background: #f9fafb;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .summary-title {
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .summary-stat {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #f59e0b;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    .summary-sources h4 {
+        margin-bottom: 1rem;
+        color: #1f2937;
+    }
+    
+    .source-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .source-tag {
+        background: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #6b7280;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .refresh-notice {
+        background: #dbeafe;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .notice-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+    
+    .pulse {
+        animation: pulse 1s;
+    }
+    
+    @media (max-width: 768px) {
+        .featured-breaking {
+            grid-template-columns: 1fr;
+        }
+        
+        .breaking-stats {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}

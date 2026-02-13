@@ -1,0 +1,753 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - Globe News{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Search Header -->
+    <div class="search-header-section">
+        <h1 class="search-title">Search Results</h1>
+        
+        <div class="search-box-large">
+            <form action="{{ url_for('search') }}" method="get" class="search-form-large">
+                <div class="search-container-large">
+                    <input type="text" 
+                           name="q" 
+                           class="search-input-large" 
+                           placeholder="Search all articles..."
+                           value="{{ query }}"
+                           autofocus>
+                    <button type="submit" class="search-btn-large">
+                        <i class="fas fa-search"></i>
+                        Search
+                    </button>
+                </div>
+                
+                <div class="search-filters">
+                    <span class="filter-label">Filter by Language:</span>
+                    <div class="language-filters">
+                        <a href="{{ url_for('search', q=query, language='all') }}" 
+                           class="filter-btn {{ 'active' if language == 'all' }}">
+                            All Languages
+                        </a>
+                        <a href="{{ url_for('search', q=query, language='en') }}" 
+                           class="filter-btn {{ 'active' if language == 'en' }}">
+                            English
+                        </a>
+                        <a href="{{ url_for('search', q=query, language='rw') }}" 
+                           class="filter-btn {{ 'active' if language == 'rw' }}">
+                            Kinyarwanda
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="results-summary">
+        {% if query %}
+        <p class="results-count">
+            Found <strong>{{ total_results }}</strong> results for "<strong>{{ query }}</strong>"
+            {% if language != 'all' %}
+            in <strong>{{ 'English' if language == 'en' else 'Kinyarwanda' }}</strong>
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Search Results -->
+    {% if articles %}
+    <div class="search-results-grid">
+        {% for article in articles %}
+        <article class="search-result-card">
+            <div class="result-image-container">
+                {% if article.url_to_image %}
+                <img src="{{ article.url_to_image }}" 
+                     alt="{{ article.title }}"
+                     class="result-image"
+                     onerror="this.src='https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60';">
+                {% else %}
+                <img src="https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" 
+                     alt="News placeholder"
+                     class="result-image">
+                {% endif %}
+                
+                {% if article.is_breaking %}
+                <span class="breaking-badge">BREAKING</span>
+                {% endif %}
+                
+                {% if article.category %}
+                <span class="category-badge" 
+                      style="background-color: {{ article.category|category_color }}">
+                    {{ article.category }}
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="result-content">
+                <div class="result-meta">
+                    <span class="result-source">{{ article.source }}</span>
+                    <span class="dot">•</span>
+                    <span class="result-date">{{ article.published_at|datetimeformat('%b %d, %Y') }}</span>
+                    {% if article.language %}
+                    <span class="dot">•</span>
+                    <span class="result-language">
+                        {% if article.language == 'en' %}🇬🇧{% else %}🇷🇼{% endif %}
+                        {{ article.language|upper }}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <h2 class="result-title">
+                    <a href="{{ url_for('article_detail', article_id=article.id) }}">
+                        {{ article.title }}
+                    </a>
+                </h2>
+                
+                <p class="result-description">
+                    {{ article.description|truncate(200) }}
+                </p>
+                
+                <!-- Simple content excerpt without complex logic -->
+                {% if article.content %}
+                <div class="result-excerpt">
+                    <p class="excerpt-text">
+                        {{ article.content|truncate(250) }}
+                    </p>
+                </div>
+                {% endif %}
+                
+                <div class="result-footer">
+                    <a href="{{ url_for('article_detail', article_id=article.id) }}" 
+                       class="read-more-btn">
+                        Read Full Article
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                    {% if article.author %}
+                    <span class="result-author">By {{ article.author }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="search-pagination">
+        {% if page > 1 %}
+        <a href="{{ url_for('search', q=query, language=language, page=page-1) }}" 
+           class="pagination-btn">
+            <i class="fas fa-chevron-left"></i>
+            Previous
+        </a>
+        {% endif %}
+        
+        <span class="pagination-info">
+            Page <strong>{{ page }}</strong> of <strong>{{ total_pages }}</strong>
+        </span>
+        
+        {% if page < total_pages %}
+        <a href="{{ url_for('search', q=query, language=language, page=page+1) }}" 
+           class="pagination-btn">
+            Next
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No Results Message -->
+    <div class="no-results-section">
+        <div class="no-results-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        <h2 class="no-results-title">No articles found</h2>
+        <p class="no-results-message">
+            {% if query %}
+            No results found for "<strong>{{ query }}</strong>"
+            {% if language != 'all' %}
+            in {{ 'English' if language == 'en' else 'Kinyarwanda' }}
+            {% endif %}
+            {% else %}
+            Please enter a search query
+            {% endif %}
+        </p>
+        
+        <div class="no-results-suggestions">
+            <h3>Suggestions:</h3>
+            <ul>
+                <li>Check your spelling</li>
+                <li>Try different keywords</li>
+                <li>Try more general terms</li>
+                <li>Browse by <a href="{{ url_for('categories') }}">category</a></li>
+                <li>View <a href="{{ url_for('index') }}">latest news</a></li>
+            </ul>
+        </div>
+        
+        <div class="search-again">
+            <a href="{{ url_for('search') }}" class="search-again-btn">
+                <i class="fas fa-redo"></i>
+                Search Again
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Popular Searches -->
+    <div class="popular-searches">
+        <h3>Popular Searches:</h3>
+        <div class="search-tags">
+            <a href="{{ url_for('search', q='technology') }}" class="search-tag">Technology</a>
+            <a href="{{ url_for('search', q='sports') }}" class="search-tag">Sports</a>
+            <a href="{{ url_for('search', q='business') }}" class="search-tag">Business</a>
+            <a href="{{ url_for('search', q='politics') }}" class="search-tag">Politics</a>
+            <a href="{{ url_for('search', q='health') }}" class="search-tag">Health</a>
+            <a href="{{ url_for('search', q='entertainment') }}" class="search-tag">Entertainment</a>
+            <a href="{{ url_for('search', q='science') }}" class="search-tag">Science</a>
+            <a href="{{ url_for('search', q='world') }}" class="search-tag">World</a>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Search Page Styles */
+.search-header-section {
+    padding: 60px 0 40px;
+    text-align: center;
+}
+
+.search-title {
+    font-size: 3rem;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, #f8fafc, #0ea5e9, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleFloat 8s infinite ease-in-out;
+}
+
+.search-box-large {
+    background: var(--card-dark);
+    backdrop-filter: blur(20px);
+    border-radius: 25px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-floating);
+    margin-bottom: 40px;
+}
+
+.search-form-large {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.search-container-large {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.search-input-large {
+    flex: 1;
+    padding: 18px 25px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.search-input-large:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.search-btn-large {
+    padding: 18px 35px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.search-btn-large:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+.search-filters {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.language-filters {
+    display: flex;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    border-radius: 20px;
+}
+
+.filter-btn {
+    padding: 10px 25px;
+    background: transparent;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #10b981, #0d9488);
+    color: white;
+    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+
+.results-summary {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+}
+
+.results-count {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.results-count strong {
+    color: var(--text-primary);
+}
+
+/* Search Results Grid */
+.search-results-grid {
+    display: grid;
+    gap: 30px;
+    margin: 40px 0;
+}
+
+.search-result-card {
+    background: var(--card-dark);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-floating);
+    transition: all 0.4s ease;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 250px;
+}
+
+.search-result-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.4),
+        0 0 50px rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.result-image-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.result-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.search-result-card:hover .result-image {
+    transform: scale(1.1);
+}
+
+.result-content {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.result-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.result-source {
+    background: rgba(59, 130, 246, 0.2);
+    padding: 5px 15px;
+    border-radius: 15px;
+    color: #0ea5e9;
+    font-weight: 600;
+}
+
+.result-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.result-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.result-title a:hover {
+    color: #0ea5e9;
+    text-decoration: underline;
+}
+
+.result-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.result-excerpt {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 3px solid #3b82f6;
+}
+
+.excerpt-text {
+    color: var(--text-secondary);
+    font-style: italic;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.result-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-author {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* No Results Section */
+.no-results-section {
+    text-align: center;
+    padding: 60px 40px;
+    background: var(--card-dark);
+    border-radius: 25px;
+    backdrop-filter: blur(20px);
+    margin: 40px 0;
+}
+
+.no-results-icon {
+    font-size: 4rem;
+    color: #6b7280;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.no-results-title {
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+}
+
+.no-results-message {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    line-height: 1.6;
+}
+
+.no-results-suggestions {
+    max-width: 500px;
+    margin: 30px auto;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 25px;
+    border-radius: 15px;
+}
+
+.no-results-suggestions h3 {
+    color: var(--text-primary);
+    margin-bottom: 15px;
+}
+
+.no-results-suggestions ul {
+    list-style: none;
+    padding: 0;
+}
+
+.no-results-suggestions li {
+    color: var(--text-secondary);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.no-results-suggestions a {
+    color: #0ea5e9;
+    text-decoration: none;
+}
+
+.no-results-suggestions a:hover {
+    text-decoration: underline;
+}
+
+.search-again {
+    margin-top: 30px;
+}
+
+.search-again-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 35px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.search-again-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+}
+
+/* Popular Searches */
+.popular-searches {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.popular-searches h3 {
+    text-align: center;
+    color: var(--text-primary);
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+}
+
+.search-tags {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.search-tag {
+    padding: 12px 25px;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.search-tag:hover {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    border-color: transparent;
+}
+
+/* Search Pagination */
+.search-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin: 50px 0;
+    padding: 25px;
+    background: var(--card-dark);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+}
+
+.pagination-btn {
+    padding: 12px 30px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pagination-btn:hover {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-color: transparent;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .search-result-card {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+    
+    .result-image-container {
+        height: 250px;
+    }
+    
+    .search-title {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-container-large {
+        flex-direction: column;
+    }
+    
+    .search-input-large,
+    .search-btn-large {
+        width: 100%;
+    }
+    
+    .search-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .language-filters {
+        flex-direction: column;
+    }
+    
+    .filter-btn {
+        text-align: center;
+    }
+    
+    .search-result-card {
+        margin: 0 10px;
+    }
+    
+    .search-pagination {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .search-title {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .search-box-large {
+        padding: 25px 20px;
+    }
+    
+    .search-title {
+        font-size: 1.8rem;
+    }
+    
+    .result-title {
+        font-size: 1.4rem;
+    }
+}
+</style>
+
+<script>
+// Highlight search terms in results (using JavaScript instead of Jinja2)
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('q');
+    
+    if (query) {
+        // Highlight in titles
+        document.querySelectorAll('.result-title').forEach(title => {
+            const text = title.textContent;
+            const regex = new RegExp(`(${query})`, 'gi');
+            title.innerHTML = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+        });
+        
+        // Highlight in descriptions
+        document.querySelectorAll('.result-description').forEach(desc => {
+            const text = desc.textContent;
+            const regex = new RegExp(`(${query})`, 'gi');
+            desc.innerHTML = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+        });
+        
+        // Highlight in excerpts
+        document.querySelectorAll('.excerpt-text').forEach(excerpt => {
+            const text = excerpt.textContent;
+            const regex = new RegExp(`(${query})`, 'gi');
+            excerpt.innerHTML = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+        });
+    }
+});
+
+// Add CSS for search highlight
+const highlightStyle = document.createElement('style');
+highlightStyle.textContent = `
+    .search-highlight {
+        background: linear-gradient(135deg, #fef3c7, #fbbf24);
+        color: #92400e;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+`;
+document.head.appendChild(highlightStyle);
+</script>
+{% endblock %}

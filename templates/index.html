@@ -1,0 +1,1180 @@
+{% extends "base.html" %}
+
+{% block title %}Globe News - Latest Global & Rwandan News{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section - Clean & Simple -->
+    <div class="hero-section">
+        <h1 class="hero-title">🌍 Globe News</h1>
+        <p class="hero-subtitle">Stay informed with the latest news from around the world and Rwanda 
+            <><><><><><><><><><><><><><><><><><><><><><><><> THIS WAS DESIGNED IN MASTER V LABS.     
+        </p>
+        
+        <!-- Simple action buttons instead of stats -->
+        <div class="hero-actions">
+            <a href="#latest-news" class="hero-btn primary">
+                <i class="fas fa-newspaper"></i>
+                Read Latest News
+            </a>
+            <a href="{{ url_for('categories') }}" class="hero-btn secondary">
+                <i class="fas fa-th-large"></i>
+                Browse Categories
+            </a>
+            <a href="{{ url_for('search') }}" class="hero-btn tertiary">
+                <i class="fas fa-search"></i>
+                Search Articles
+            </a>
+        </div>
+    </div>
+
+    <!-- Breaking News Banner -->
+    {% if breaking_articles %}
+    <div class="breaking-news-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="breaking-icon">⚡</span>
+                Breaking News
+            </h2>
+            <a href="{{ url_for('breaking_news') }}" class="view-all-link">
+                View All Breaking News <i class="arrow">→</i>
+            </a>
+        </div>
+        
+        <div class="breaking-news-grid">
+            {% for article in breaking_articles[:3] %}
+            <div class="breaking-news-card">
+                <div class="breaking-image">
+                    {% if article.url_to_image %}
+                    <img src="{{ article.url_to_image }}" 
+                         alt="{{ article.title }}"
+                         onerror="this.src='https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60';">
+                    {% else %}
+                    <img src="https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" 
+                         alt="News placeholder">
+                    {% endif %}
+                    <span class="breaking-badge">BREAKING</span>
+                </div>
+                <div class="breaking-content">
+                    <div class="breaking-meta">
+                        <span class="breaking-source">{{ article.source }}</span>
+                        <span class="breaking-date">{{ article.published_at|datetimeformat('%b %d') }}</span>
+                    </div>
+                    <h3 class="breaking-title">
+                        <a href="{{ url_for('article_detail', article_id=article.id) }}">
+                            {{ article.title }}
+                        </a>
+                    </h3>
+                    <p class="breaking-description">
+                        {{ article.description|truncate(120) }}
+                    </p>
+                    <a href="{{ url_for('article_detail', article_id=article.id) }}" 
+                       class="breaking-read-more">
+                        Read Full Story <i class="arrow">→</i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Categories Grid (Phone App Style) -->
+    <div class="categories-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="categories-icon">📱</span>
+                Browse News by Topic
+            </h2>
+            <a href="{{ url_for('categories') }}" class="view-all-link">
+                View All Topics <i class="arrow">→</i>
+            </a>
+        </div>
+        
+        <div class="categories-grid">
+            {% for category in categories %}
+            <a href="{{ url_for('category_detail', category_name=category.name) }}" 
+               class="category-app" 
+               style="--i: {{ loop.index }}">
+                <div class="category-icon">{{ category.name|category_icon }}</div>
+                <h3 class="category-name">{{ category.name }}</h3>
+                <p class="category-desc">
+                    {{ category.description if category.description else 'Latest updates' }}
+                </p>
+                <div class="category-stats">
+                    <span class="browse-btn">Browse {{ category.name }} →</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Latest Articles Grid -->
+    <div class="latest-articles-section" id="latest-news">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="latest-icon">📰</span>
+                Latest News
+            </h2>
+            <div class="language-filter">
+                <span class="filter-label">Language:</span>
+                <a href="{{ url_for('index', language='all') }}" 
+                   class="lang-filter-btn {{ 'active' if language == 'all' }}">
+                    🌍 All
+                </a>
+                <a href="{{ url_for('index', language='en') }}" 
+                   class="lang-filter-btn {{ 'active' if language == 'en' }}">
+                    🇬🇧 English
+                </a>
+                <a href="{{ url_for('index', language='rw') }}" 
+                   class="lang-filter-btn {{ 'active' if language == 'rw' }}">
+                    🇷🇼 Kinyarwanda
+                </a>
+            </div>
+        </div>
+        
+        {% if articles %}
+        <div class="articles-grid">
+            {% for article in articles %}
+            <article class="article-card">
+                <div class="article-image-container">
+                    {% if article.url_to_image %}
+                    <img src="{{ article.url_to_image }}" 
+                         alt="{{ article.title }}"
+                         class="article-image"
+                         onerror="this.src='https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60';">
+                    {% else %}
+                    <img src="https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" 
+                         alt="News placeholder"
+                         class="article-image">
+                    {% endif %}
+                    
+                    {% if article.is_breaking %}
+                    <span class="breaking-badge">BREAKING</span>
+                    {% endif %}
+                    
+                    {% if article.category %}
+                    <span class="category-badge" 
+                          style="background-color: {{ article.category|category_color }}">
+                        {{ article.category }}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="article-content">
+                    <div class="article-meta">
+                        <span class="source">{{ article.source }}</span>
+                        <span class="dot">•</span>
+                        <span class="date">{{ article.published_at|datetimeformat('%b %d, %Y') }}</span>
+                        {% if article.language %}
+                        <span class="dot">•</span>
+                        <span class="language-indicator">
+                            {% if article.language == 'en' %}🇬🇧{% else %}🇷🇼{% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <h3 class="article-title">
+                        <a href="{{ url_for('article_detail', article_id=article.id) }}">
+                            {{ article.title }}
+                        </a>
+                    </h3>
+                    
+                    <p class="article-description">
+                        {{ article.description|truncate(150) }}
+                    </p>
+                    
+                    <div class="article-footer">
+                        <a href="{{ url_for('article_detail', article_id=article.id) }}" 
+                           class="read-more-btn">
+                            Read Article
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        {% if article.author %}
+                        <span class="author">By {{ article.author }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        
+        {% if articles|length >= 24 %}
+        <div class="load-more-section">
+            <a href="{{ url_for('search') }}" class="load-more-btn">
+                <i class="fas fa-search"></i>
+                Search for More Articles
+            </a>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📰</div>
+            <h3>No articles found</h3>
+            <p>Try changing the language filter or check back later for updates.</p>
+            <a href="{{ url_for('index', language='all') }}" class="btn-primary">
+                <i class="fas fa-globe"></i>
+                Show All Articles
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Featured Categories (Clean & Simple) -->
+    <div class="featured-categories">
+        <h2 class="featured-title">Popular Topics</h2>
+        <div class="category-tags">
+            <a href="{{ url_for('category_detail', category_name='World') }}" class="category-tag world">
+                <i class="fas fa-globe-americas"></i>
+                World News
+            </a>
+            <a href="{{ url_for('category_detail', category_name='Technology') }}" class="category-tag tech">
+                <i class="fas fa-microchip"></i>
+                Technology
+            </a>
+            <a href="{{ url_for('category_detail', category_name='Sports') }}" class="category-tag sports">
+                <i class="fas fa-running"></i>
+                Sports
+            </a>
+            <a href="{{ url_for('category_detail', category_name='Business') }}" class="category-tag business">
+                <i class="fas fa-chart-line"></i>
+                Business
+            </a>
+            <a href="{{ url_for('category_detail', category_name='Health') }}" class="category-tag health">
+                <i class="fas fa-heartbeat"></i>
+                Health
+            </a>
+            <a href="{{ url_for('search', q='Rwanda') }}" class="category-tag rwanda">
+                <i class="fas fa-flag"></i>
+                Rwanda News
+            </a>
+        </div>
+    </div>
+
+    <!-- Newsletter Signup (Optional) -->
+    <div class="newsletter-section">
+        <div class="newsletter-card">
+            <div class="newsletter-icon">
+                <i class="fas fa-newspaper"></i>
+            </div>
+            <div class="newsletter-content">
+                <h3>Stay Updated</h3>
+                <p>Get the latest news delivered directly to your inbox</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Your email address" class="newsletter-input">
+                    <button type="submit" class="newsletter-btn">
+                        Subscribe
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+                <p class="newsletter-note">No spam, unsubscribe anytime.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional CSS for Clean Homepage -->
+<style>
+/* Hero Section - Clean */
+.hero-section {
+    padding: 80px 0 60px;
+    text-align: center;
+    position: relative;
+}
+
+.hero-title {
+    font-size: 4rem;
+    font-weight: 900;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #f8fafc, #0ea5e9, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleFloat 8s infinite ease-in-out;
+}
+
+@keyframes titleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+}
+
+.hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 40px;
+}
+
+.hero-btn {
+    padding: 15px 30px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.hero-btn.primary {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+}
+
+.hero-btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-btn.tertiary {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.hero-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.hero-btn.primary:hover {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+.hero-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.hero-btn.tertiary:hover {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+/* Breaking News Section */
+.breaking-news-section {
+    margin: 60px 0;
+}
+
+.breaking-news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.breaking-news-card {
+    background: var(--card-dark);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-floating);
+    transition: all 0.4s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.breaking-news-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+.breaking-image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.breaking-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.breaking-news-card:hover .breaking-image img {
+    transform: scale(1.1);
+}
+
+.breaking-content {
+    padding: 25px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.breaking-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.breaking-source {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-weight: 600;
+}
+
+.breaking-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.breaking-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.breaking-title a:hover {
+    color: var(--water-cyan);
+    text-decoration: underline;
+}
+
+.breaking-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    flex-grow: 2;
+}
+
+.breaking-read-more {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 10px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.breaking-read-more:hover {
+    transform: translateX(5px);
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 2rem;
+    color: var(--text-primary);
+}
+
+.section-title .breaking-icon,
+.section-title .categories-icon,
+.section-title .latest-icon {
+    font-size: 2.5rem;
+    animation: iconPulse 3s infinite ease-in-out;
+}
+
+.view-all-link {
+    color: var(--water-cyan);
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(6, 182, 212, 0.1);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.view-all-link:hover {
+    background: rgba(6, 182, 212, 0.2);
+    transform: translateX(5px);
+}
+
+/* Language Filter */
+.language-filter {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 20px;
+    border-radius: 20px;
+}
+
+.filter-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.lang-filter-btn {
+    padding: 8px 20px;
+    border-radius: 15px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lang-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-filter-btn.active {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    box-shadow: var(--glow-primary);
+}
+
+/* Categories Grid */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.category-app {
+    background: var(--card-dark);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 30px;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-floating);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: appFloat 6s infinite ease-in-out;
+    animation-delay: calc(var(--i) * 0.2s);
+}
+
+@keyframes appFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.category-app:hover {
+    transform: translateY(-15px) rotateX(5deg) rotateY(5deg) scale(1.05);
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.4),
+        var(--glow-primary);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.category-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    display: inline-block;
+    animation: iconPulse 3s infinite ease-in-out;
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.category-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, var(--text-primary), var(--water-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.category-desc {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 25px;
+    min-height: 60px;
+}
+
+.category-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.browse-btn {
+    color: var(--water-cyan);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.category-app:hover .browse-btn {
+    transform: translateX(5px);
+    color: var(--accent-primary);
+}
+
+/* Articles Grid */
+.articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+    margin: 40px 0;
+}
+
+.article-card {
+    background: var(--card-dark);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-floating);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: cardAppear 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.article-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.4),
+        0 0 50px rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.article-card:nth-child(1) { animation-delay: 0.1s; }
+.article-card:nth-child(2) { animation-delay: 0.2s; }
+.article-card:nth-child(3) { animation-delay: 0.3s; }
+.article-card:nth-child(4) { animation-delay: 0.4s; }
+.article-card:nth-child(5) { animation-delay: 0.5s; }
+.article-card:nth-child(6) { animation-delay: 0.6s; }
+
+.article-image-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.article-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.article-card:hover .article-image {
+    transform: scale(1.1);
+}
+
+.article-content {
+    padding: 25px;
+}
+
+.article-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.source {
+    background: rgba(59, 130, 246, 0.2);
+    padding: 4px 12px;
+    border-radius: 15px;
+    color: var(--water-blue);
+    font-weight: 600;
+}
+
+.date {
+    color: var(--text-secondary);
+}
+
+.language-indicator {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+}
+
+.article-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.article-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.article-title a:hover {
+    color: var(--water-cyan);
+    text-decoration: underline;
+}
+
+.article-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.article-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.read-more-btn {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    padding: 10px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+.read-more-btn:hover {
+    transform: translateX(5px);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+}
+
+.author {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Load More Section */
+.load-more-section {
+    text-align: center;
+    margin: 50px 0;
+}
+
+.load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 40px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--glow-primary);
+}
+
+.load-more-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.4);
+    gap: 20px;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    background: var(--card-dark);
+    border-radius: 25px;
+    backdrop-filter: blur(20px);
+    margin: 40px 0;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 35px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: var(--glow-primary);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
+}
+
+/* Featured Categories */
+.featured-categories {
+    margin: 80px 0;
+    text-align: center;
+}
+
+.featured-title {
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin-bottom: 40px;
+}
+
+.category-tags {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.category-tag {
+    padding: 15px 30px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.category-tag.world {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.category-tag.tech {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+    border: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.category-tag.sports {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 2px solid rgba(245, 158, 11, 0.3);
+}
+
+.category-tag.business {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.category-tag.health {
+    background: rgba(236, 72, 153, 0.2);
+    color: #ec4899;
+    border: 2px solid rgba(236, 72, 153, 0.3);
+}
+
+.category-tag.rwanda {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 2px solid rgba(239, 68, 68, 0.3);
+}
+
+.category-tag:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Newsletter Section */
+.newsletter-section {
+    margin: 80px 0;
+}
+
+.newsletter-card {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 60px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-floating);
+}
+
+.newsletter-icon {
+    font-size: 4rem;
+    color: #3b82f6;
+    margin-bottom: 30px;
+}
+
+.newsletter-content h3 {
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+}
+
+.newsletter-content p {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.newsletter-form {
+    display: flex;
+    gap: 15px;
+    max-width: 500px;
+    margin: 0 auto 20px;
+}
+
+.newsletter-input {
+    flex: 1;
+    padding: 15px 25px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.newsletter-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.newsletter-btn {
+    padding: 15px 35px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.newsletter-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+}
+
+.newsletter-note {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .hero-title {
+        font-size: 3rem;
+    }
+    
+    .articles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .hero-btn {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .language-filter {
+        align-self: stretch;
+        justify-content: center;
+    }
+    
+    .breaking-news-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .categories-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .articles-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .category-tags {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .category-tag {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+    
+    .newsletter-card {
+        padding: 40px 20px;
+    }
+    
+    .newsletter-form {
+        flex-direction: column;
+    }
+    
+    .newsletter-input,
+    .newsletter-btn {
+        width: 100%;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 2.2rem;
+    }
+    
+    .breaking-news-card {
+        flex-direction: column;
+    }
+    
+    .breaking-image {
+        height: 180px;
+    }
+    
+    .newsletter-content h3 {
+        font-size: 2rem;
+    }
+}
+</style>
+
+<script>
+// Add hover effect for cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.article-card, .breaking-news-card, .category-app');
+    
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.zIndex = '10';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.zIndex = '1';
+        });
+    });
+    
+    // Auto-refresh breaking news badge
+    const breakingBadges = document.querySelectorAll('.breaking-badge');
+    breakingBadges.forEach(badge => {
+        setInterval(() => {
+            badge.style.opacity = badge.style.opacity === '0.7' ? '1' : '0.7';
+        }, 1000);
+    });
+    
+    // Newsletter form submission (placeholder)
+    const newsletterForm = document.querySelector('.newsletter-form');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const emailInput = this.querySelector('.newsletter-input');
+            if (emailInput.value) {
+                alert('Thank you for subscribing! You will receive updates soon.');
+                emailInput.value = '';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
