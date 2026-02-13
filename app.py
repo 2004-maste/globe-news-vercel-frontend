@@ -13,7 +13,7 @@ import os
 app = Flask(__name__)
 
 # Backend API configuration
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+https://p01--backend-api--5pt6gkpwq49b.code.run
 API_VERSION = "v1"
 
 @app.template_filter('datetimeformat')
