@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- Homepage -->
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    
+    <!-- Breaking News -->
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/breaking</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    
+    <!-- Categories Page -->
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/categories</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <!-- Search Page -->
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/search</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    
+    <!-- Category Pages -->
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/World</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/Technology</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/Business</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/Science</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/Health</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/Sports</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/Entertainment</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/Politics</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://globe-news-master-v-labs.vercel.app/category/General</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.7</priority>
+    </url>
+</urlset>
