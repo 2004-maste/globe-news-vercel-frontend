@@ -196,30 +196,40 @@ def trigger_fetch():
 
 @app.route('/')
 def index():
-    """Homepage - Latest news."""
-    # Get language preference
+    """Homepage - Latest news with pagination."""
+    # Get parameters
     language = request.args.get('language', 'all')
+    page = request.args.get('page', 1, type=int)
+    limit = 12  # Articles per page (adjust as needed)
+    skip = (page - 1) * limit
     
-    # Fetch latest articles
+    # Fetch latest articles with pagination
     params = {
-        'limit': 24,
+        'limit': limit,
+        'skip': skip,
         'language': language
     }
     
     articles_data = fetch_articles(params)
     articles = articles_data.get('articles', [])
+    total_articles = articles_data.get('total', 0)
     
-    # Fetch breaking news
+    # Calculate total pages
+    total_pages = (total_articles + limit - 1) // limit
+    
+    # Fetch breaking news (always latest, not paginated)
     breaking_data = fetch_breaking_articles()
     breaking_articles = breaking_data.get('articles', [])[:5]
     
-    # Fetch categories for sidebar
+    # Fetch categories with article counts
     categories = fetch_categories()
-    
-    # Calculate total articles per category
     for category in categories:
-        cat_params = {'category': category['name'], 'limit': 1}
-        cat_data = fetch_articles(cat_params)
+        cat_params = {
+            'category': category['name'], 
+            'limit': 1,
+            'language': language if language != 'all' else None
+        }
+        cat_data = fetch_articles({k: v for k, v in cat_params.items() if v is not None})
         category['article_count'] = cat_data.get('total', 0)
     
     return render_template(
@@ -228,7 +238,10 @@ def index():
         breaking_articles=breaking_articles,
         categories=categories,
         language=language,
-        total_articles=articles_data.get('total', 0)
+        page=page,
+        total_pages=total_pages,
+        total_articles=total_articles,
+        limit=limit
     )
 
 @app.route('/article/<int:article_id>')
