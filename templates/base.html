@@ -29,8 +29,8 @@
     {% block head_scripts %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
+    <!-- Navigation with Auto-hide -->
+    <nav class="navbar" id="mainNavbar">
     <div class="navbar-container">
         <!-- Logo -->
         <a href="{{ url_for('index') }}" class="logo">
@@ -207,7 +207,7 @@
     {% endwith %}
 
     <!-- Main Content -->
-    <main class="content-wrapper">
+    <main class="content-wrapper" id="mainContent">
         <div class="container">
             {% block content %}
             <!-- Page-specific content goes here -->
@@ -286,6 +286,91 @@
 
     <!-- JavaScript -->
     <script>
+        // Auto-hide Header on Scroll
+        let lastScrollTop = 0;
+        const navbar = document.getElementById('mainNavbar');
+        const scrollThreshold = 50; // Minimum scroll amount before hiding
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        window.addEventListener('scroll', function() {
+            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Only apply auto-hide on mobile (below 768px)
+            if (window.innerWidth <= 768) {
+                // Don't hide if mobile menu is open
+                if (mobileMenu && mobileMenu.classList.contains('active')) {
+                    navbar.classList.remove('navbar-hidden');
+                    return;
+                }
+                
+                // Scrolling DOWN & past threshold -> hide navbar
+                if (currentScroll > lastScrollTop && currentScroll > scrollThreshold) {
+                    navbar.classList.add('navbar-hidden');
+                } 
+                // Scrolling UP -> show navbar
+                else if (currentScroll < lastScrollTop) {
+                    navbar.classList.remove('navbar-hidden');
+                }
+                
+                // At the very top -> always show
+                if (currentScroll <= 10) {
+                    navbar.classList.remove('navbar-hidden');
+                }
+            } else {
+                // On desktop, always show navbar
+                navbar.classList.remove('navbar-hidden');
+            }
+            
+            lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+        }, { passive: true });
+
+        // Reset navbar visibility on resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                navbar.classList.remove('navbar-hidden');
+            }
+        });
+
+        // Mobile Menu Toggle - Updated to handle navbar visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('active');
+                    
+                    // Change icon
+                    const icon = this.querySelector('i');
+                    if (mobileMenu.classList.contains('active')) {
+                        icon.className = 'fas fa-times';
+                        // When menu opens, ensure navbar is visible
+                        navbar.classList.remove('navbar-hidden');
+                    } else {
+                        icon.className = 'fas fa-bars';
+                    }
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (mobileMenu.classList.contains('active') && 
+                        !mobileMenu.contains(event.target) && 
+                        !mobileMenuBtn.contains(event.target)) {
+                        mobileMenu.classList.remove('active');
+                        mobileMenuBtn.querySelector('i').className = 'fas fa-bars';
+                    }
+                });
+
+                // Close mobile menu on link click
+                document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.remove('active');
+                        mobileMenuBtn.querySelector('i').className = 'fas fa-bars';
+                    });
+                });
+            }
+        });
+
         // Backend Health Check
         async function checkBackendHealth() {
             try {
@@ -318,44 +403,6 @@
             }
         }
 
-        // Mobile Menu Toggle - Fixed version
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const mobileMenu = document.getElementById('mobileMenu');
-            
-            if (mobileMenuBtn && mobileMenu) {
-                mobileMenuBtn.addEventListener('click', function() {
-                    mobileMenu.classList.toggle('active');
-                    
-                    // Change icon
-                    const icon = this.querySelector('i');
-                    if (mobileMenu.classList.contains('active')) {
-                        icon.className = 'fas fa-times';
-                    } else {
-                        icon.className = 'fas fa-bars';
-                    }
-                });
-
-                // Close mobile menu when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (mobileMenu.classList.contains('active') && 
-                        !mobileMenu.contains(event.target) && 
-                        !mobileMenuBtn.contains(event.target)) {
-                        mobileMenu.classList.remove('active');
-                        mobileMenuBtn.querySelector('i').className = 'fas fa-bars';
-                    }
-                });
-
-                // Close mobile menu on link click
-                document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                    link.addEventListener('click', function() {
-                        mobileMenu.classList.remove('active');
-                        mobileMenuBtn.querySelector('i').className = 'fas fa-bars';
-                    });
-                });
-            }
-        });
-
         // Manual News Fetch
         async function triggerManualFetch() {
             try {
@@ -386,6 +433,8 @@
                 // Hide mobile menu on larger screens
                 mobileMenu.classList.remove('active');
                 menuBtn.querySelector('i').className = 'fas fa-bars';
+                // Ensure navbar is visible on desktop
+                navbar.classList.remove('navbar-hidden');
             }
         }
 
