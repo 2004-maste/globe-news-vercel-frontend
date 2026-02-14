@@ -1,114 +1,72 @@
 {% extends "base.html" %}
-
 {% block title %}About Us - Globe News{% endblock %}
-
 {% block content %}
-<div class="about-container">
-    <h1>About Globe News</h1>
-    
-    <div class="about-section">
-        <h2>Our Mission</h2>
-        <p>Globe News delivers accurate, timely, and comprehensive news coverage from Rwanda and around the world. We combine automated news aggregation with human editorial oversight to provide readers with reliable, unbiased information that helps them understand the world around them.</p>
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">About Globe News</h1>
+        <div class="title-underline"></div>
     </div>
     
-    <div class="about-section">
-        <h2>Our Story</h2>
-        <p>Founded in 2026, Globe News emerged from a vision to create a modern news platform that leverages technology while maintaining journalistic integrity. What started as a simple news aggregator has grown into a comprehensive news source covering 30+ RSS feeds across multiple categories and languages.</p>
+    <div class="about-grid">
+        <div class="about-card mission-card">
+            <div class="card-icon">🎯</div>
+            <h2>Our Mission</h2>
+            <p>Globe News delivers accurate, timely, and comprehensive news coverage from Rwanda and around the world. We combine advanced AI technology with human editorial oversight to provide reliable, unbiased news that helps our readers understand the world around them.</p>
+        </div>
+        
+        <div class="about-card story-card">
+            <div class="card-icon">📰</div>
+            <h2>Our Story</h2>
+            <p>Founded in 2026 by <strong>Rugira Manzi Vivien</strong>, Globe News emerged from Master V Labs with a vision to revolutionize news consumption in Rwanda and beyond. What started as an innovative project has grown into a trusted news platform serving thousands of readers daily.</p>
+        </div>
+        
+        <div class="about-card team-card">
+            <div class="card-icon">👥</div>
+            <h2>Our Team</h2>
+            <p>Led by <strong>Rugira Manzi Vivien</strong>, our team combines cutting-edge AI technology with dedicated human editors who ensure every story meets our standards for accuracy, relevance, and quality. We're passionate about bringing you the news that matters.</p>
+        </div>
+        
+        <div class="about-card location-card">
+            <div class="card-icon">📍</div>
+            <h2>Our Location</h2>
+            <p><strong>Master V Labs</strong><br>
+            Kigali, Rwanda<br>
+            Innovating for a better-connected world</p>
+        </div>
     </div>
     
-    <div class="about-section">
-        <h2>Our Coverage</h2>
-        <p>We curate news from over 30 trusted sources including:</p>
-        <ul>
-            <li><strong>International:</strong> BBC, Reuters, Associated Press, CNN, Al Jazeera, The Guardian</li>
-            <li><strong>Technology:</strong> TechCrunch, Wired</li>
-            <li><strong>Business:</strong> Bloomberg, KT Press</li>
-            <li><strong>Rwandan News:</strong> IGIHE, New Times Rwanda, BBC Kinyarwanda, RBA Rwanda</li>
-        </ul>
+    <div class="about-values">
+        <h2>Our Core Values</h2>
+        <div class="values-grid">
+            <div class="value-item">
+                <div class="value-icon">🔍</div>
+                <h3>Accuracy</h3>
+                <p>We verify every story before publication</p>
+            </div>
+            <div class="value-item">
+                <div class="value-icon">⚡</div>
+                <h3>Speed</h3>
+                <p>Breaking news as it happens</p>
+            </div>
+            <div class="value-item">
+                <div class="value-icon">🌍</div>
+                <h3>Perspective</h3>
+                <p>Local insight with global context</p>
+            </div>
+            <div class="value-item">
+                <div class="value-icon">💡</div>
+                <h3>Innovation</h3>
+                <p>Powered by Master V Labs technology</p>
+            </div>
+        </div>
     </div>
     
-    <div class="about-section">
-        <h2>Our Technology</h2>
-        <p>Globe News is powered by a modern tech stack including FastAPI backend with Redis caching, Flask frontend, and persistent SQLite database. We've archived over 1,800 articles with full content extraction for 30% of them, ensuring readers get comprehensive news coverage.</p>
-    </div>
-    
-    <div class="about-section">
-        <h2>Our Team</h2>
-        <p>Globe News combines advanced AI technology with dedicated human editors who ensure every story meets our standards for accuracy and relevance. Our team works around the clock to bring you the latest news as it happens.</p>
-    </div>
-    
-    <div class="about-section">
-        <h2>Contact Information</h2>
-        <p><strong>Email:</strong> info@globenews.com<br>
-        <strong>Editorial:</strong> editorial@globenews.com<br>
-        <strong>Location:</strong> Kigali, Rwanda</p>
+    <div class="contact-highlight">
+        <div class="highlight-content">
+            <h3>Want to get in touch?</h3>
+            <p>We'd love to hear from you. Reach out to us anytime.</p>
+            <a href="{{ url_for('contact') }}" class="btn-primary">Contact Us</a>
+        </div>
     </div>
 </div>
-
-<style>
-.about-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.about-container h1 {
-    color: var(--primary-color);
-    margin-bottom: 30px;
-    text-align: center;
-    font-size: 2.5rem;
-}
-
-.about-section {
-    margin-bottom: 40px;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 25px;
-    border-radius: 10px;
-    border-left: 4px solid var(--primary-color);
-}
-
-.about-section h2 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
-    font-size: 1.5rem;
-}
-
-.about-section p {
-    line-height: 1.8;
-    color: #ccc;
-}
-
-.about-section ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.about-section li {
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ccc;
-}
-
-.about-section li:last-child {
-    border-bottom: none;
-}
-
-.about-section strong {
-    color: #fff;
-}
-
-@media (max-width: 768px) {
-    .about-container {
-        padding: 15px;
-    }
-    
-    .about-container h1 {
-        font-size: 2rem;
-    }
-    
-    .about-section {
-        padding: 20px;
-    }
-}
-</style>
 {% endblock %}
