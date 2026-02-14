@@ -432,6 +432,40 @@ def api_health():
             "timestamp": datetime.now().isoformat()
         }), 200
 
+# ==================== STATIC PAGES (for Bing/AdSense) ====================
+
+@app.route('/about')
+def about():
+    """About Us page"""
+    return render_template('about.html')
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    """Contact page with form handling"""
+    if request.method == 'POST':
+        # Here you would handle form submission
+        # For now, just show success message
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject = request.form.get('subject')
+        message = request.form.get('message')
+        
+        # TODO: Send email or store message
+        # For now, just redirect with success
+        return render_template('contact.html', success=True)
+    
+    return render_template('contact.html', success=False)
+
+@app.route('/privacy')
+def privacy():
+    """Privacy Policy page"""
+    return render_template('privacy.html')
+
+@app.route('/terms')
+def terms():
+    """Terms of Service page"""
+    return render_template('terms.html')
+
 @app.errorhandler(404)
 def page_not_found(e):
     """404 error handler."""
