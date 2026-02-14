@@ -3,10 +3,21 @@
 {% block title %}{{ article.title }} - Globe News{% endblock %}
 
 {% block breadcrumb %}
-<div class="container breadcrumb">
-    <a href="{{ url_for('index') }}">Home</a> &gt;
-    <a href="{{ url_for('category_detail', category_name=article.category_name) }}">{{ article.category_name }}</a> &gt;
-    <span>{{ article.title|truncate(50) }}</span>
+<div class="breadcrumb-wrapper">
+    <div class="container">
+        <nav class="breadcrumb-nav" aria-label="breadcrumb">
+            <a href="{{ url_for('index') }}" class="breadcrumb-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <span class="breadcrumb-separator">›</span>
+            <a href="{{ url_for('category_detail', category_name=article.category_name) }}" 
+               class="breadcrumb-link">
+                {{ article.category_name }}
+            </a>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-current">{{ article.title|truncate(50) }}</span>
+        </nav>
+    </div>
 </div>
 {% endblock %}
 
@@ -14,32 +25,48 @@
 <div class="article-detail-page">
     <!-- Alert Messages -->
     {% if error_message %}
-    <div class="alert alert-danger">
-        <i class="fas fa-exclamation-circle"></i> {{ error_message }}
+    <div class="alert error-alert" role="alert">
+        <div class="alert-icon">
+            <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="alert-content">
+            <p>{{ error_message }}</p>
+        </div>
+        <button class="alert-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
     {% endif %}
     
     <!-- Content Warning -->
     {% if content_warning %}
-    <div class="alert alert-warning">
-        <i class="fas fa-exclamation-triangle"></i> {{ content_warning }}
-        <p class="mt-1" style="font-size: 0.9rem; opacity: 0.8;">
-            <i class="fas fa-info-circle"></i> The preview may be limited. Full content extraction requires the article URL to be accessible.
-        </p>
+    <div class="alert warning-alert" role="alert">
+        <div class="alert-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="alert-content">
+            <strong>{{ content_warning }}</strong>
+            <p class="mt-2">The preview may be limited. Full content extraction requires the article URL to be accessible.</p>
+        </div>
+        <button class="alert-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
     {% endif %}
     
     <!-- Preview Regeneration Banner -->
     {% if needs_regeneration %}
-    <div class="regenerate-preview-banner alert alert-info">
-        <div class="d-flex justify-between align-center">
+    <div class="alert info-alert regenerate-banner" role="alert">
+        <div class="alert-icon">
+            <i class="fas fa-sync-alt"></i>
+        </div>
+        <div class="alert-content d-flex justify-between align-center flex-wrap">
             <div>
-                <strong><i class="fas fa-sync-alt"></i> Preview Update Available</strong>
-                <p class="mt-1 mb-0" style="font-size: 0.9rem;">
-                    Regenerate to include full article content analysis.
-                </p>
+                <strong>Preview Update Available</strong>
+                <p class="mt-1 mb-0">Regenerate to include full article content analysis.</p>
             </div>
-            <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" class="btn btn-primary">
+            <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
+               class="btn btn-primary btn-sm regenerate-btn">
                 <i class="fas fa-magic"></i> Regenerate Preview
             </a>
         </div>
@@ -47,277 +74,374 @@
     {% endif %}
     
     <!-- Article Header -->
-    <div class="article-header">
+    <div class="article-header-wrapper">
         <div class="article-meta-top">
             <a href="{{ url_for('category_detail', category_name=article.category_name) }}" 
-               class="article-category">
-                <i class="fas fa-tag"></i> {{ article.category_name }}
+               class="category-link">
+                <span class="category-dot" style="background-color: {{ article.category_name|category_color }}"></span>
+                <span>{{ article.category_name }}</span>
             </a>
-            <span class="article-badges">
+            
+            <div class="article-badges">
                 {% if article.is_breaking %}
-                <span class="breaking-badge">
+                <span class="badge badge-breaking">
                     <i class="fas fa-bolt"></i> Breaking
                 </span>
                 {% endif %}
                 
-                <span class="language-badge">
+                <span class="badge badge-language {% if article.language == 'en' %}badge-en{% else %}badge-rw{% endif %}">
                     {% if article.language == 'en' %}🇬🇧 English{% else %}🇷🇼 Kinyarwanda{% endif %}
                 </span>
                 
                 {% if has_full_content %}
-                <span class="content-extraction-badge">
-                    <i class="fas fa-check-circle"></i> Full Content Analyzed
-                </span>
-                {% endif %}
-            </span>
-        </div>
-        
-        <h1 class="article-title">{{ article.title }}</h1>
-        
-        <div class="article-meta">
-            <div class="article-source-info">
-                {% set domain = article.url.replace('https://','').replace('http://','').split('/')[0] %}
-                <img src="https://www.google.com/s2/favicons?domain={{ domain }}" 
-                     alt="{{ article.source }}" 
-                     class="source-favicon"
-                     onerror="this.style.display='none'">
-                <span class="article-source">{{ article.source }}</span>
-                {% if article.author and article.author != 'Unknown' %}
-                <span class="article-author">
-                    <i class="fas fa-user-edit"></i> {{ article.author }}
+                <span class="badge badge-full-content">
+                    <i class="fas fa-check-circle"></i> Full Analysis
                 </span>
                 {% endif %}
             </div>
-            
-            <div class="article-time-info">
-                <span class="article-published">
-                    <i class="far fa-clock"></i> {{ article.published_at|datetimeformat('%B %d, %Y %I:%M %p') }}
-                </span>
-                <span class="article-time-ago">({{ article.published_at|time_ago }})</span>
+        </div>
+        
+        <h1 class="article-main-title">{{ article.title }}</h1>
+        
+        <div class="article-byline">
+            <div class="byline-avatar">
+                <div class="avatar-initials">
+                    {{ article.source[:1]|upper }}
+                </div>
+            </div>
+            <div class="byline-info">
+                <div class="byline-name">
+                    <span class="byline-source">{{ article.source }}</span>
+                    {% if article.author and article.author != 'Unknown' %}
+                    <span class="byline-author">by {{ article.author }}</span>
+                    {% endif %}
+                </div>
+                <div class="byline-meta">
+                    <span class="meta-item">
+                        <i class="far fa-calendar-alt"></i> 
+                        {{ article.published_at|datetimeformat('%B %d, %Y') }}
+                    </span>
+                    <span class="meta-item">
+                        <i class="far fa-clock"></i> 
+                        {{ article.published_at|datetimeformat('%I:%M %p') }}
+                    </span>
+                    <span class="meta-item meta-time-ago">
+                        ({{ article.published_at|time_ago }})
+                    </span>
+                </div>
             </div>
         </div>
     </div>
     
-    <!-- Article Image -->
+    <!-- Article Hero Image -->
     {% if article.url_to_image %}
-    <div class="article-image-container">
-        <img src="{{ article.url_to_image }}" 
-             alt="{{ article.title }}" 
-             class="article-main-image"
-             onerror="this.src='https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'">
-        {% if article.source %}
-        <div class="image-caption">Source: {{ article.source }}</div>
-        {% endif %}
+    <div class="article-hero">
+        <div class="hero-image-container">
+            <img src="{{ article.url_to_image }}" 
+                 alt="{{ article.title }}" 
+                 class="hero-image"
+                 onerror="this.src='https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'">
+            <div class="hero-caption">
+                <i class="fas fa-camera"></i> Source: {{ article.source }}
+            </div>
+        </div>
     </div>
     {% endif %}
     
-    <!-- Content Sections -->
-    <div class="article-content-sections">
-        <!-- Article Description -->
-        {% if article.description %}
-        <section class="article-description-section">
-            <h2 class="section-heading">
-                <i class="fas fa-newspaper"></i> Article Summary
-            </h2>
-            <div class="article-description">
-                {{ article.description|safe }}
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Main Content Column -->
+        <div class="main-content-column">
+            <!-- Article Description -->
+            {% if article.description %}
+            <div class="content-card description-card">
+                <div class="card-header">
+                    <div class="header-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h2 class="header-title">Article Summary</h2>
+                </div>
+                <div class="card-body">
+                    <div class="description-content">
+                        {{ article.description|safe }}
+                    </div>
+                </div>
             </div>
-        </section>
-        {% endif %}
-        
-        <!-- Content Preview -->
-        <section class="preview-section">
-            <div class="section-header">
-                <h2 class="section-heading">
-                    <i class="fas fa-analytics"></i> Content Analysis
+            {% endif %}
+            
+            <!-- Content Preview Section -->
+            <div class="content-card preview-card">
+                <div class="card-header">
+                    <div class="header-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h2 class="header-title">Content Analysis</h2>
                     {% if preview_html %}
-                    <span class="section-subheading">Enhanced Preview</span>
-                    {% endif %}
-                </h2>
-                
-                <div class="preview-actions">
-                    {% if preview_html %}
-                    <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
-                       class="btn btn-outline btn-sm">
-                        <i class="fas fa-redo"></i> Regenerate
-                    </a>
+                    <span class="header-badge">Enhanced Preview</span>
                     {% endif %}
                     
-                    <a href="{{ article.url }}" 
-                       target="_blank" 
-                       class="btn btn-primary btn-sm">
-                        <i class="fas fa-external-link-alt"></i> View Original
-                    </a>
-                </div>
-            </div>
-            
-            {% if preview_html %}
-            <div class="preview-content">
-                {{ preview_html|safe }}
-            </div>
-            {% else %}
-            <div class="no-preview">
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-analytics"></i>
+                    <div class="header-actions">
+                        {% if preview_html %}
+                        <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
+                           class="btn-icon" title="Regenerate Preview">
+                            <i class="fas fa-redo-alt"></i>
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{{ article.url }}" 
+                           target="_blank" 
+                           class="btn-icon" 
+                           title="View Original">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
                     </div>
-                    <h3>No Preview Available</h3>
-                    <p>This article hasn't been analyzed yet. Generate a preview to see key insights and analysis.</p>
-                    <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" class="btn btn-primary">
-                        <i class="fas fa-magic"></i> Generate Preview
-                    </a>
+                </div>
+                
+                <div class="card-body">
+                    {% if preview_html %}
+                    <div class="preview-content-wrapper">
+                        <div class="preview-content">
+                            {{ preview_html|safe }}
+                        </div>
+                        
+                        <div class="preview-footer">
+                            <span class="preview-note">
+                                <i class="fas fa-robot"></i> AI-generated analysis
+                            </span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-preview">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-analytics"></i>
+                        </div>
+                        <h3 class="empty-state-title">No Preview Available</h3>
+                        <p class="empty-state-text">
+                            This article hasn't been analyzed yet. Generate a preview to see key insights and analysis.
+                        </p>
+                        <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Generate Preview
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Full Article Content -->
+            {% if article.content and article.content|length > 100 %}
+            <div class="content-card full-content-card">
+                <div class="card-header">
+                    <div class="header-icon">
+                        <i class="fas fa-align-left"></i>
+                    </div>
+                    <h2 class="header-title">Full Article Content</h2>
+                    {% if content_length %}
+                    <span class="header-badge">{{ content_length }} chars</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="full-content">
+                        {{ article.content|safe }}
+                    </div>
                 </div>
             </div>
             {% endif %}
-        </section>
+        </div>
         
-        <!-- Full Article Content (if available) -->
-        {% if article.content and article.content|length > 100 %}
-        <section class="full-content-section">
-            <h2 class="section-heading">
-                <i class="fas fa-align-left"></i> Full Article Content
-                {% if content_length %}
-                <span class="content-length">({{ content_length }} characters)</span>
-                {% endif %}
-            </h2>
-            <div class="full-content">
-                {{ article.content|safe }}
+        <!-- Sidebar Column -->
+        <div class="sidebar-column">
+            <!-- Article Actions Card -->
+            <div class="sidebar-card actions-card">
+                <h3 class="sidebar-title">Actions</h3>
+                <div class="action-grid">
+                    <a href="{{ article.url }}" target="_blank" class="action-item primary-action">
+                        <div class="action-icon">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                        <div class="action-info">
+                            <span class="action-label">Read Original</span>
+                            <span class="action-desc">View on source site</span>
+                        </div>
+                    </a>
+                    
+                    <button class="action-item" onclick="shareArticle()">
+                        <div class="action-icon">
+                            <i class="fas fa-share-alt"></i>
+                        </div>
+                        <div class="action-info">
+                            <span class="action-label">Share</span>
+                            <span class="action-desc">Share this article</span>
+                        </div>
+                    </button>
+                    
+                    <button class="action-item" onclick="copyArticleLink()">
+                        <div class="action-icon">
+                            <i class="fas fa-copy"></i>
+                        </div>
+                        <div class="action-info">
+                            <span class="action-label">Copy Link</span>
+                            <span class="action-desc">Copy to clipboard</span>
+                        </div>
+                    </button>
+                    
+                    <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" class="action-item">
+                        <div class="action-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="action-info">
+                            <span class="action-label">Refresh</span>
+                            <span class="action-desc">Update analysis</span>
+                        </div>
+                    </a>
+                </div>
             </div>
-        </section>
-        {% endif %}
+            
+            <!-- Article Stats Card -->
+            <div class="sidebar-card stats-card">
+                <h3 class="sidebar-title">Article Stats</h3>
+                <div class="stats-list">
+                    <div class="stat-item">
+                        <span class="stat-label">Content Type</span>
+                        <span class="stat-value">
+                            {% if has_full_content %}Full Article{% else %}RSS Summary{% endif %}
+                        </span>
+                    </div>
+                    {% if content_length %}
+                    <div class="stat-item">
+                        <span class="stat-label">Length</span>
+                        <span class="stat-value">{{ content_length }} chars</span>
+                    </div>
+                    {% endif %}
+                    <div class="stat-item">
+                        <span class="stat-label">Language</span>
+                        <span class="stat-value">{{ article.language|upper }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Category</span>
+                        <span class="stat-value">{{ article.category_name }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Article ID</span>
+                        <span class="stat-value">#{{ article.id }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Links Card -->
+            <div class="sidebar-card quicklinks-card">
+                <h3 class="sidebar-title">Quick Links</h3>
+                <div class="quicklinks-list">
+                    <a href="{{ url_for('category_detail', category_name=article.category_name) }}" 
+                       class="quicklink-item">
+                        <i class="fas fa-folder-open"></i>
+                        <span>More {{ article.category_name }} News</span>
+                    </a>
+                    
+                    <a href="{{ url_for('index') }}?language={{ article.language }}" 
+                       class="quicklink-item">
+                        <i class="fas fa-globe"></i>
+                        <span>More {% if article.language == 'en' %}English{% else %}Kinyarwanda{% endif %} News</span>
+                    </a>
+                    
+                    <a href="{{ url_for('search') }}?q={{ article.category_name }}" 
+                       class="quicklink-item">
+                        <i class="fas fa-search"></i>
+                        <span>Search {{ article.category_name }}</span>
+                    </a>
+                    
+                    <a href="{{ article.url }}" target="_blank" class="quicklink-item">
+                        <i class="fas fa-external-link-square-alt"></i>
+                        <span>Visit Source</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Source Info Card -->
+            <div class="sidebar-card source-card">
+                <h3 class="sidebar-title">Source Information</h3>
+                <div class="source-details">
+                    {% set domain = article.url.replace('https://','').replace('http://','').split('/')[0] %}
+                    <div class="source-favicon-container">
+                        <img src="https://www.google.com/s2/favicons?domain={{ domain }}" 
+                             alt="{{ article.source }}" 
+                             class="source-favicon"
+                             onerror="this.style.display='none'">
+                        <span class="source-name">{{ article.source }}</span>
+                    </div>
+                    {% if article.author and article.author != 'Unknown' %}
+                    <div class="source-author">
+                        <i class="fas fa-user-edit"></i> {{ article.author }}
+                    </div>
+                    {% endif %}
+                    <div class="source-published">
+                        <i class="far fa-calendar-check"></i> {{ article.published_at|datetimeformat }}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
-    <!-- Article Actions -->
-    <div class="article-actions">
-        <div class="action-buttons">
-            <a href="{{ article.url }}" target="_blank" class="btn btn-primary">
-                <i class="fas fa-external-link-alt"></i> Read Original Article
-            </a>
-            
-            <button class="btn btn-secondary" onclick="shareArticle()">
-                <i class="fas fa-share-alt"></i> Share
-            </button>
-            
-            <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" class="btn btn-outline">
-                <i class="fas fa-redo"></i> Refresh Analysis
-            </a>
+    <!-- Related Articles Section -->
+    {% if article.related_articles %}
+    <section class="related-section">
+        <div class="section-header-wrapper">
+            <h2 class="section-title">
+                <i class="fas fa-layer-group"></i> Related Articles
+            </h2>
+            <p class="section-subtitle">More stories you might be interested in</p>
         </div>
         
-        <div class="article-stats">
-            <span class="stat">
-                <i class="fas fa-database"></i> 
-                {% if has_full_content %}Full Content{% else %}RSS Content{% endif %}
-            </span>
-            {% if content_length %}
-            <span class="stat">
-                <i class="fas fa-ruler"></i> {{ content_length }} chars
-            </span>
-            {% endif %}
-            <span class="stat">
-                <i class="fas fa-globe"></i> {{ article.language|upper }}
-            </span>
-        </div>
-    </div>
-    
-    <!-- Related Articles -->
-    {% if article.related_articles %}
-    <section class="related-articles">
-        <h2 class="section-heading">
-            <i class="fas fa-layer-group"></i> Related Articles
-        </h2>
-        <div class="related-articles-grid">
+        <div class="related-grid">
             {% for related in article.related_articles[:4] %}
-            <div class="related-article-card">
-                {% if related.url_to_image %}
-                <img src="{{ related.url_to_image }}" 
-                     alt="{{ related.title }}" 
-                     class="related-article-image"
-                     onerror="this.style.display='none'">
-                {% endif %}
-                <div class="related-article-content">
-                    <div class="related-article-category">
+            <a href="{{ url_for('article_detail', article_id=related.id) }}" class="related-card">
+                <div class="related-image-container">
+                    {% if related.url_to_image %}
+                    <img src="{{ related.url_to_image }}" 
+                         alt="{{ related.title }}" 
+                         class="related-image"
+                         onerror="this.style.display='none'">
+                    <div class="related-image-fallback" style="display: none;">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    {% else %}
+                    <div class="related-image-fallback">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="related-content">
+                    <div class="related-category">
+                        <span class="category-dot-small" 
+                              style="background-color: {{ related.category_name|category_color }}"></span>
                         {{ related.category_name }}
                     </div>
-                    <h3 class="related-article-title">
-                        <a href="{{ url_for('article_detail', article_id=related.id) }}">
-                            {{ related.title|truncate(80) }}
-                        </a>
-                    </h3>
-                    <div class="related-article-meta">
-                        <span class="related-article-source">{{ related.source }}</span>
-                        <span class="related-article-time">{{ related.published_at|time_ago }}</span>
+                    <h3 class="related-title">{{ related.title|truncate(80) }}</h3>
+                    <div class="related-meta">
+                        <span class="related-source">
+                            <i class="fas fa-building"></i> {{ related.source }}
+                        </span>
+                        <span class="related-time">
+                            <i class="far fa-clock"></i> {{ related.published_at|time_ago }}
+                        </span>
                     </div>
                 </div>
-            </div>
+            </a>
             {% endfor %}
         </div>
     </section>
     {% endif %}
     
-    <!-- Article Metadata -->
-    <div class="article-metadata">
-        <div class="metadata-section">
-            <h3 class="metadata-heading">
-                <i class="fas fa-info-circle"></i> Article Information
-            </h3>
-            <div class="metadata-grid">
-                <div class="metadata-item">
-                    <span class="metadata-label">Source</span>
-                    <span class="metadata-value">{{ article.source }}</span>
-                </div>
-                <div class="metadata-item">
-                    <span class="metadata-label">Category</span>
-                    <span class="metadata-value">{{ article.category_name }}</span>
-                </div>
-                <div class="metadata-item">
-                    <span class="metadata-label">Language</span>
-                    <span class="metadata-value">
-                        {% if article.language == 'en' %}English{% else %}Kinyarwanda{% endif %}
-                    </span>
-                </div>
-                <div class="metadata-item">
-                    <span class="metadata-label">Published</span>
-                    <span class="metadata-value">{{ article.published_at|datetimeformat }}</span>
-                </div>
-                <div class="metadata-item">
-                    <span class="metadata-label">Content Type</span>
-                    <span class="metadata-value">
-                        {% if has_full_content %}Full Article{% else %}RSS Summary{% endif %}
-                    </span>
-                </div>
-                {% if article.author and article.author != 'Unknown' %}
-                <div class="metadata-item">
-                    <span class="metadata-label">Author</span>
-                    <span class="metadata-value">{{ article.author }}</span>
-                </div>
-                {% endif %}
-                <div class="metadata-item">
-                    <span class="metadata-label">Article ID</span>
-                    <span class="metadata-value">#{{ article.id }}</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="metadata-section">
-            <h3 class="metadata-heading">
-                <i class="fas fa-link"></i> Quick Actions
-            </h3>
-            <div class="action-links">
-                <a href="{{ url_for('category_detail', category_name=article.category_name) }}" 
-                   class="action-link">
-                    <i class="fas fa-folder"></i> More {{ article.category_name }} News
-                </a>
-                <a href="{{ url_for('index') }}?language={{ article.language }}" 
-                   class="action-link">
-                    <i class="fas fa-globe"></i> More 
-                    {% if article.language == 'en' %}English{% else %}Kinyarwanda{% endif %} News
-                </a>
-                <a href="{{ url_for('search') }}?q={{ article.category_name }}" 
-                   class="action-link">
-                    <i class="fas fa-search"></i> Search {{ article.category_name }}
-                </a>
-                <button class="action-link" onclick="copyArticleLink()">
-                    <i class="fas fa-copy"></i> Copy Article Link
+    <!-- Article Footer -->
+    <div class="article-footer">
+        <div class="footer-content">
+            <span class="footer-copyright">
+                © 2026 Globe News | Powered by Master V Labs
+            </span>
+            <div class="footer-actions">
+                <button class="footer-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <i class="fas fa-arrow-up"></i> Back to Top
                 </button>
             </div>
         </div>
@@ -327,120 +451,152 @@
 
 {% block scripts %}
 <script>
+    // Toast Notification System
+    class ToastManager {
+        constructor() {
+            this.container = document.createElement('div');
+            this.container.className = 'toast-container';
+            document.body.appendChild(this.container);
+        }
+        
+        show(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                </div>
+                <div class="toast-message">${message}</div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            this.container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Auto remove
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    }
+    
+    // Initialize toast manager
+    const toast = new ToastManager();
+    
     // Share Article Function
-    function shareArticle() {
-        if (navigator.share) {
-            navigator.share({
-                title: '{{ article.title }}',
-                text: 'Check out this article on Globe News',
-                url: window.location.href
-            })
-            .then(() => console.log('Article shared successfully'))
-            .catch(error => console.log('Error sharing:', error));
-        } else {
-            // Fallback: Copy to clipboard
-            copyArticleLink();
+    async function shareArticle() {
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: '{{ article.title }}',
+                    text: 'Check out this article on Globe News',
+                    url: window.location.href
+                });
+                toast.show('Article shared successfully!');
+            } else {
+                // Fallback: Copy to clipboard
+                await copyArticleLink();
+                toast.show('Link copied! You can now share it manually.');
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Error sharing:', error);
+                toast.show('Failed to share article', 'error');
+            }
         }
     }
     
     // Copy Article Link
-    function copyArticleLink() {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url)
-            .then(() => {
-                showToast('Article link copied to clipboard!');
-            })
-            .catch(err => {
-                console.error('Failed to copy: ', err);
-                showToast('Failed to copy link. Please copy manually.');
-            });
-    }
-    
-    // Show Toast Notification
-    function showToast(message) {
-        // Remove existing toast
-        const existingToast = document.querySelector('.toast-notification');
-        if (existingToast) existingToast.remove();
-        
-        // Create toast
-        const toast = document.createElement('div');
-        toast.className = 'toast-notification';
-        toast.innerHTML = `
-            <div class="toast-content">
-                <i class="fas fa-check-circle"></i>
-                <span>${message}</span>
-            </div>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        // Show toast
-        setTimeout(() => toast.classList.add('show'), 10);
-        
-        // Remove toast after 3 seconds
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+    async function copyArticleLink() {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            toast.show('Article link copied to clipboard!');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+            // Fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = window.location.href;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            toast.show('Link copied to clipboard!');
+        }
     }
     
     // Image Error Handling
-    document.querySelectorAll('.article-main-image, .related-article-image').forEach(img => {
-        img.addEventListener('error', function() {
-            if (this.classList.contains('article-main-image')) {
-                this.src = 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80';
-            }
-            this.onerror = null;
-        });
-    });
-    
-    // Preview Content Enhancement
     document.addEventListener('DOMContentLoaded', function() {
-        // Add click handlers to preview links to open in new tab
-        document.querySelectorAll('.preview-content a').forEach(link => {
-            link.setAttribute('target', '_blank');
-            link.setAttribute('rel', 'noopener noreferrer');
-        });
+        // Handle hero image errors
+        const heroImage = document.querySelector('.hero-image');
+        if (heroImage) {
+            heroImage.addEventListener('error', function() {
+                this.src = 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80';
+                this.onerror = null;
+            });
+        }
         
-        // Smooth scroll for anchor links within preview
-        document.querySelectorAll('.preview-content a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href');
-                if (targetId !== '#') {
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        targetElement.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
+        // Handle related images errors
+        document.querySelectorAll('.related-image').forEach(img => {
+            img.addEventListener('error', function() {
+                this.style.display = 'none';
+                const fallback = this.closest('.related-image-container').querySelector('.related-image-fallback');
+                if (fallback) {
+                    fallback.style.display = 'flex';
                 }
             });
         });
         
-        // Add loading state to regenerate button
-        document.querySelectorAll('a[href*="regenerate"]').forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (this.classList.contains('processing')) {
+        // Enhance preview content links
+        document.querySelectorAll('.preview-content a').forEach(link => {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer nofollow');
+        });
+        
+        // Add loading state to regenerate buttons
+        document.querySelectorAll('.regenerate-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                if (this.classList.contains('loading')) {
                     e.preventDefault();
                     return;
                 }
                 
-                this.classList.add('processing');
-                const originalText = this.innerHTML;
+                this.classList.add('loading');
+                const originalHtml = this.innerHTML;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-                this.style.pointerEvents = 'none';
+                this.disabled = true;
                 
-                // Re-enable after 15 seconds if still on page
+                // Reset after timeout (in case page doesn't redirect)
                 setTimeout(() => {
-                    if (this.classList.contains('processing')) {
-                        this.classList.remove('processing');
-                        this.innerHTML = originalText;
-                        this.style.pointerEvents = 'auto';
-                        showToast('Preview generation is taking longer than expected. Please wait...');
+                    if (this.classList.contains('loading')) {
+                        this.classList.remove('loading');
+                        this.innerHTML = originalHtml;
+                        this.disabled = false;
+                        toast.show('Taking longer than expected. Please try again.', 'error');
                     }
                 }, 15000);
+            });
+        });
+        
+        // Initialize tooltips
+        document.querySelectorAll('[title]').forEach(el => {
+            el.addEventListener('mouseenter', function(e) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = this.getAttribute('title');
+                tooltip.style.top = e.pageY + 10 + 'px';
+                tooltip.style.left = e.pageX + 10 + 'px';
+                document.body.appendChild(tooltip);
+                
+                setTimeout(() => tooltip.classList.add('show'), 10);
+                
+                this.addEventListener('mouseleave', function() {
+                    tooltip.remove();
+                }, { once: true });
             });
         });
     });
@@ -453,32 +609,55 @@
             shareArticle();
         }
         
-        // Ctrl/Cmd + C to copy link
-        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && e.shiftKey) {
+        // Ctrl/Cmd + Shift + C to copy link
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
             e.preventDefault();
             copyArticleLink();
         }
         
-        // Escape to close any open modals/toasts
+        // Escape to close toasts
         if (e.key === 'Escape') {
-            document.querySelectorAll('.toast-notification').forEach(toast => {
+            document.querySelectorAll('.toast').forEach(toast => {
                 toast.remove();
             });
         }
+        
+        // ? to show help
+        if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            toast.show('Keyboard Shortcuts: S (Share), Ctrl+Shift+C (Copy Link)', 'info');
+        }
     });
     
-    // Backend Health Check for Preview Generation
+    // Lazy load related images
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+        
+        document.querySelectorAll('.related-image[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+    
+    // Backend Health Check
     async function checkBackendHealth() {
         try {
             const response = await fetch('/api/health');
             const data = await response.json();
             
-            if (data.backend.status !== 'healthy') {
-                const regenerateBtn = document.querySelector('a[href*="regenerate"]');
-                if (regenerateBtn) {
-                    regenerateBtn.style.opacity = '0.5';
-                    regenerateBtn.style.pointerEvents = 'none';
+            const regenerateBtn = document.querySelector('.regenerate-btn');
+            if (regenerateBtn) {
+                if (data.backend.status !== 'healthy') {
+                    regenerateBtn.classList.add('disabled');
                     regenerateBtn.title = 'Backend is offline. Cannot generate preview.';
+                    toast.show('Preview generation temporarily unavailable', 'error');
                 }
             }
         } catch (error) {
@@ -487,6 +666,25 @@
     }
     
     // Check backend health on page load
-    document.addEventListener('DOMContentLoaded', checkBackendHealth);
+    if (document.querySelector('.regenerate-btn')) {
+        checkBackendHealth();
+    }
+    
+    // Reading Progress Indicator
+    function updateReadingProgress() {
+        const winScroll = document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        
+        let progressBar = document.getElementById('reading-progress');
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.id = 'reading-progress';
+            document.body.appendChild(progressBar);
+        }
+        progressBar.style.width = scrolled + '%';
+    }
+    
+    window.addEventListener('scroll', updateReadingProgress);
 </script>
 {% endblock %}
