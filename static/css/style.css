@@ -2952,3 +2952,73 @@ body::after {
         color: #000;
     }
 }
+
+/* ==================== MOBILE OPTIMIZATION ==================== */
+@media (max-width: 768px) {
+    /* Simplify navbar */
+    .navbar {
+        padding: 10px 15px;
+    }
+    
+    .navbar-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    
+    /* Smaller logo */
+    .logo-icon {
+        font-size: 1.8rem;
+    }
+    
+    .logo-text {
+        font-size: 1.2rem;
+    }
+    
+    /* Hide search bar by default on mobile */
+    .search-container {
+        display: none;
+    }
+    
+    /* Hide language switcher and status on mobile */
+    .language-status-container {
+        display: none;
+    }
+    
+    /* Make mobile menu button more prominent */
+    .mobile-menu-btn {
+        display: flex !important;
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+    
+    /* When navbar is hidden */
+    .navbar.navbar-hidden {
+        transform: translateY(-100%);
+    }
+    
+    /* Adjust mobile menu position */
+    .mobile-menu {
+        top: 70px;
+        left: 15px;
+        right: 15px;
+    }
+}
+
+/* Even smaller phones */
+@media (max-width: 480px) {
+    .logo-icon {
+        font-size: 1.5rem;
+    }
+    
+    .logo-text {
+        font-size: 1rem;
+    }
+    
+    .mobile-menu-btn {
+        width: 40px;
+        height: 40px;
+    }
+}
