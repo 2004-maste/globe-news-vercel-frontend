@@ -448,80 +448,46 @@ def internal_server_error(e):
 
 @app.route('/sitemap.xml')
 def sitemap():
-    """Generate sitemap.xml for search engines"""
-    from urllib.parse import urljoin
-    from flask import make_response
+    """Generate sitemap.xml with all pages and articles"""
+    from flask import Response
+    import requests
+    from urllib.parse import quote
     
-    # Base URL
     base_url = 'https://globe-news-jade.vercel.app'
     
     # Start XML
-    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Static Pages -->
+  <url><loc>https://globe-news-jade.vercel.app/</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://globe-news-jade.vercel.app/breaking</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://globe-news-jade.vercel.app/categories</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://globe-news-jade.vercel.app/search</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+'''
     
-    # Static pages (highest priority)
-    static_pages = [
-        {'loc': '/', 'priority': '1.0', 'changefreq': 'hourly'},
-        {'loc': '/breaking', 'priority': '0.9', 'changefreq': 'hourly'},
-        {'loc': '/categories', 'priority': '0.8', 'changefreq': 'daily'},
-        {'loc': '/search', 'priority': '0.5', 'changefreq': 'monthly'}
-    ]
-    
-    for page in static_pages:
-        xml += '  <url>\n'
-        xml += f'    <loc>{base_url}{page["loc"]}</loc>\n'
-        xml += f'    <changefreq>{page["changefreq"]}</changefreq>\n'
-        xml += f'    <priority>{page["priority"]}</priority>\n'
-        xml += '  </url>\n'
-    
-    # Category pages - fetch from backend
+    # Add Categories (from your backend)
     try:
-        categories = fetch_categories()
-        for category in categories:
-            category_name = category.get('name', '')
-            if category_name:
-                xml += '  <url>\n'
-                xml += f'    <loc>{base_url}/category/{category_name}</loc>\n'
-                xml += f'    <changefreq>daily</changefreq>\n'
-                xml += f'    <priority>0.7</priority>\n'
-                xml += '  </url>\n'
+        cats = requests.get('https://p01--backend-api--5pt6gkpwq49b.code.run/api/v1/categories', timeout=3).json()
+        for cat in cats:
+            if cat.get('name'):
+                cat_name = quote(cat['name'])
+                xml += f'  <url><loc>{base_url}/category/{cat_name}</loc><changefreq>daily</changefreq><priority>0.7</priority></url>\n'
     except:
         pass  # Skip categories if backend fails
     
-    # Article pages - fetch latest articles to get IDs
+    # Add Latest Articles (from your homepage)
     try:
-        # Fetch multiple pages of articles to get all IDs
-        all_articles = []
-        page = 1
-        while True:
-            params = {'limit': 100, 'skip': (page-1)*100}
-            data = fetch_articles(params)
-            articles = data.get('articles', [])
-            if not articles:
-                break
-            all_articles.extend(articles)
-            page += 1
-            if page > 20:  # Safety limit (2000 articles)
-                break
-        
-        # Add each article to sitemap
-        for article in all_articles:
+        # Get latest 100 articles from your backend
+        articles = requests.get('https://p01--backend-api--5pt6gkpwq49b.code.run/api/v1/articles?limit=100', timeout=3).json()
+        for article in articles.get('articles', []):
             article_id = article.get('id')
             if article_id:
-                xml += '  <url>\n'
-                xml += f'    <loc>{base_url}/article/{article_id}</loc>\n'
-                xml += f'    <changefreq>weekly</changefreq>\n'
-                xml += f'    <priority>0.6</priority>\n'
-                xml += '  </url>\n'
+                xml += f'  <url><loc>{base_url}/article/{article_id}</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>\n'
     except:
         pass  # Skip articles if backend fails
     
     xml += '</urlset>'
-    
-    # Return as XML
-    response = make_response(xml)
-    response.headers['Content-Type'] = 'application/xml'
-    return response
+    return Response(xml, mimetype='application/xml')
 
 if __name__ == '__main__':
     print("\n" + "="*60)
