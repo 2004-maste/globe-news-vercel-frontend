@@ -7,9 +7,7 @@
     <!-- Hero Section - Clean & Simple -->
     <div class="hero-section">
         <h1 class="hero-title">🌍 Globe News</h1>
-        <p class="hero-subtitle">Stay informed with the latest news from around the world and Rwanda 
-            <><><><><><><><><><><><><><><><><><><><><><><><> THIS WAS DESIGNED IN MASTER V LABS.     
-        </p>
+        <p class="hero-subtitle">Stay informed with the latest news from around the world and Rwanda</p>
         
         <!-- Simple action buttons instead of stats -->
         <div class="hero-actions">
@@ -103,13 +101,14 @@
                 </p>
                 <div class="category-stats">
                     <span class="browse-btn">Browse {{ category.name }} →</span>
+                    <span class="article-count">{{ category.article_count }} articles</span>
                 </div>
             </a>
             {% endfor %}
         </div>
     </div>
 
-    <!-- Latest Articles Grid -->
+    <!-- Latest Articles Grid with Pagination -->
     <div class="latest-articles-section" id="latest-news">
         <div class="section-header">
             <h2 class="section-title">
@@ -118,15 +117,15 @@
             </h2>
             <div class="language-filter">
                 <span class="filter-label">Language:</span>
-                <a href="{{ url_for('index', language='all') }}" 
+                <a href="{{ url_for('index', language='all', page=1) }}" 
                    class="lang-filter-btn {{ 'active' if language == 'all' }}">
                     🌍 All
                 </a>
-                <a href="{{ url_for('index', language='en') }}" 
+                <a href="{{ url_for('index', language='en', page=1) }}" 
                    class="lang-filter-btn {{ 'active' if language == 'en' }}">
                     🇬🇧 English
                 </a>
-                <a href="{{ url_for('index', language='rw') }}" 
+                <a href="{{ url_for('index', language='rw', page=1) }}" 
                    class="lang-filter-btn {{ 'active' if language == 'rw' }}">
                     🇷🇼 Kinyarwanda
                 </a>
@@ -199,12 +198,94 @@
             {% endfor %}
         </div>
         
-        {% if articles|length >= 24 %}
-        <div class="load-more-section">
-            <a href="{{ url_for('search') }}" class="load-more-btn">
-                <i class="fas fa-search"></i>
-                Search for More Articles
-            </a>
+        <!-- Pagination Numbers Section -->
+        {% if total_pages > 1 %}
+        <div class="pagination-section">
+            <div class="pagination-info">
+                Showing page {{ page }} of {{ total_pages }} • {{ total_articles }} total articles
+            </div>
+            
+            <div class="pagination-numbers">
+                <!-- Previous Button -->
+                {% if page > 1 %}
+                <a href="{{ url_for('index', language=language, page=page-1) }}" 
+                   class="pagination-btn prev" 
+                   aria-label="Previous page">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% else %}
+                <span class="pagination-btn disabled" aria-disabled="true">
+                    <i class="fas fa-chevron-left"></i>
+                </span>
+                {% endif %}
+                
+                <!-- Page Numbers -->
+                {% set start_page = [1, page-2]|max %}
+                {% set end_page = [total_pages, page+2]|min %}
+                
+                <!-- First page indicator if needed -->
+                {% if start_page > 1 %}
+                <a href="{{ url_for('index', language=language, page=1) }}" 
+                   class="page-number" 
+                   aria-label="Page 1">
+                    1
+                </a>
+                {% if start_page > 2 %}
+                <span class="page-dots">...</span>
+                {% endif %}
+                {% endif %}
+                
+                <!-- Page numbers loop -->
+                {% for p in range(start_page, end_page + 1) %}
+                <a href="{{ url_for('index', language=language, page=p) }}" 
+                   class="page-number {{ 'active' if p == page else '' }}" 
+                   aria-label="Page {{ p }}" 
+                   {% if p == page %}aria-current="page"{% endif %}>
+                    {{ p }}
+                </a>
+                {% endfor %}
+                
+                <!-- Last page indicator if needed -->
+                {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}
+                <span class="page-dots">...</span>
+                {% endif %}
+                <a href="{{ url_for('index', language=language, page=total_pages) }}" 
+                   class="page-number" 
+                   aria-label="Page {{ total_pages }}">
+                    {{ total_pages }}
+                </a>
+                {% endif %}
+                
+                <!-- Next Button -->
+                {% if page < total_pages %}
+                <a href="{{ url_for('index', language=language, page=page+1) }}" 
+                   class="pagination-btn next" 
+                   aria-label="Next page">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% else %}
+                <span class="pagination-btn disabled" aria-disabled="true">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+                {% endif %}
+            </div>
+            
+            <!-- Jump to page form -->
+            <div class="pagination-jump">
+                <form method="get" action="{{ url_for('index') }}" class="jump-form">
+                    <input type="hidden" name="language" value="{{ language }}">
+                    <label for="jump-page" class="jump-label">Go to page:</label>
+                    <input type="number" 
+                           id="jump-page" 
+                           name="page" 
+                           min="1" 
+                           max="{{ total_pages }}" 
+                           value="{{ page }}"
+                           class="jump-input">
+                    <button type="submit" class="jump-btn">Go</button>
+                </form>
+            </div>
         </div>
         {% endif %}
         
@@ -213,7 +294,7 @@
             <div class="empty-icon">📰</div>
             <h3>No articles found</h3>
             <p>Try changing the language filter or check back later for updates.</p>
-            <a href="{{ url_for('index', language='all') }}" class="btn-primary">
+            <a href="{{ url_for('index', language='all', page=1) }}" class="btn-primary">
                 <i class="fas fa-globe"></i>
                 Show All Articles
             </a>
@@ -274,7 +355,7 @@
     </div>
 </div>
 
-<!-- Additional CSS for Clean Homepage -->
+<!-- Additional CSS for Clean Homepage and Pagination -->
 <style>
 /* Hero Section - Clean */
 .hero-section {
@@ -350,18 +431,6 @@
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
 }
 
-.hero-btn.primary:hover {
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
-}
-
-.hero-btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.hero-btn.tertiary:hover {
-    background: rgba(16, 185, 129, 0.3);
-}
-
 /* Breaking News Section */
 .breaking-news-section {
     margin: 60px 0;
@@ -415,70 +484,6 @@
     flex-direction: column;
 }
 
-.breaking-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-
-.breaking-source {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    padding: 5px 15px;
-    border-radius: 15px;
-    font-weight: 600;
-}
-
-.breaking-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-    line-height: 1.4;
-    flex-grow: 1;
-}
-
-.breaking-title a {
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.breaking-title a:hover {
-    color: var(--water-cyan);
-    text-decoration: underline;
-}
-
-.breaking-description {
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 20px;
-    flex-grow: 2;
-}
-
-.breaking-read-more {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: white;
-    padding: 10px 25px;
-    border-radius: 25px;
-    text-decoration: none;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: all 0.3s ease;
-    align-self: flex-start;
-    margin-top: auto;
-}
-
-.breaking-read-more:hover {
-    transform: translateX(5px);
-    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
-}
-
 /* Section Headers */
 .section-header {
     display: flex;
@@ -495,13 +500,6 @@
     gap: 15px;
     font-size: 2rem;
     color: var(--text-primary);
-}
-
-.section-title .breaking-icon,
-.section-title .categories-icon,
-.section-title .latest-icon {
-    font-size: 2.5rem;
-    animation: iconPulse 3s infinite ease-in-out;
 }
 
 .view-all-link {
@@ -583,16 +581,9 @@
     animation-delay: calc(var(--i) * 0.2s);
 }
 
-@keyframes appFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
 .category-app:hover {
     transform: translateY(-15px) rotateX(5deg) rotateY(5deg) scale(1.05);
-    box-shadow: 
-        0 25px 50px rgba(0, 0, 0, 0.4),
-        var(--glow-primary);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
     border-color: rgba(59, 130, 246, 0.3);
 }
 
@@ -634,15 +625,18 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.article-count {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 12px;
+    border-radius: 15px;
+}
+
 .browse-btn {
     color: var(--water-cyan);
     font-weight: 600;
     transition: all 0.3s ease;
-}
-
-.category-app:hover .browse-btn {
-    transform: translateX(5px);
-    color: var(--accent-primary);
 }
 
 /* Articles Grid */
@@ -667,9 +661,7 @@
 
 .article-card:hover {
     transform: translateY(-10px) scale(1.02);
-    box-shadow: 
-        0 25px 50px rgba(0, 0, 0, 0.4),
-        0 0 50px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
     border-color: rgba(59, 130, 246, 0.3);
 }
 
@@ -691,192 +683,165 @@
 .article-card:nth-child(5) { animation-delay: 0.5s; }
 .article-card:nth-child(6) { animation-delay: 0.6s; }
 
-.article-image-container {
-    position: relative;
-    height: 200px;
-    overflow: hidden;
+/* ==================== PAGINATION STYLES ==================== */
+.pagination-section {
+    margin: 60px 0 40px;
+    text-align: center;
 }
 
-.article-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-}
-
-.article-card:hover .article-image {
-    transform: scale(1.1);
-}
-
-.article-content {
-    padding: 25px;
-}
-
-.article-meta {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-bottom: 15px;
-}
-
-.source {
-    background: rgba(59, 130, 246, 0.2);
-    padding: 4px 12px;
-    border-radius: 15px;
-    color: var(--water-blue);
-    font-weight: 600;
-}
-
-.date {
+.pagination-info {
     color: var(--text-secondary);
-}
-
-.language-indicator {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-}
-
-.article-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-    line-height: 1.4;
-}
-
-.article-title a {
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.article-title a:hover {
-    color: var(--water-cyan);
-    text-decoration: underline;
-}
-
-.article-description {
-    color: var(--text-secondary);
-    line-height: 1.6;
+    font-size: 0.95rem;
     margin-bottom: 20px;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.article-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.read-more-btn {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: white;
-    padding: 10px 25px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 25px;
+    display: inline-block;
+}
+
+.pagination-numbers {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.page-number {
+    min-width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-secondary);
     text-decoration: none;
     font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
     transition: all 0.3s ease;
+    padding: 0 5px;
+}
+
+.page-number:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+    color: white;
+}
+
+.page-number.active {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    border: none;
     box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
 }
 
-.read-more-btn:hover {
-    transform: translateX(5px);
-    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
-}
-
-.author {
+.page-dots {
     color: var(--text-muted);
-    font-size: 0.9rem;
-    font-style: italic;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 0 5px;
 }
 
-/* Load More Section */
-.load-more-section {
-    text-align: center;
-    margin: 50px 0;
-}
-
-.load-more-btn {
-    display: inline-flex;
+.pagination-btn {
+    width: 45px;
+    height: 45px;
+    display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 15px 40px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: white;
-    text-decoration: none;
-    border-radius: 30px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-    box-shadow: var(--glow-primary);
-}
-
-.load-more-btn:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.4);
-    gap: 20px;
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 60px 40px;
-    background: var(--card-dark);
-    border-radius: 25px;
-    backdrop-filter: blur(20px);
-    margin: 40px 0;
-}
-
-.empty-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    opacity: 0.5;
-}
-
-.empty-state h3 {
-    font-size: 1.8rem;
-    margin-bottom: 15px;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
     color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
 }
 
-.empty-state p {
-    color: var(--text-secondary);
-    margin-bottom: 30px;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
+.pagination-btn:hover:not(.disabled) {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-color: transparent;
+    transform: translateX(3px);
+    color: white;
 }
 
-.btn-primary {
-    display: inline-flex;
+.pagination-btn.prev:hover:not(.disabled) {
+    transform: translateX(-3px);
+}
+
+.pagination-btn.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Jump to page form */
+.pagination-jump {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+}
+
+.jump-form {
+    display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 35px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: white;
-    text-decoration: none;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 20px;
     border-radius: 25px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: var(--glow-primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
+.jump-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.jump-input {
+    width: 70px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.jump-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.jump-btn {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.jump-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+/* Remove spinner from number input */
+.jump-input::-webkit-inner-spin-button,
+.jump-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.jump-input[type=number] {
+    -moz-appearance: textfield;
 }
 
 /* Featured Categories */
@@ -1078,103 +1043,19 @@
     .language-filter {
         align-self: stretch;
         justify-content: center;
+        flex-wrap: wrap;
     }
     
-    .breaking-news-grid {
-        grid-template-columns: 1fr;
+    .pagination-numbers {
+        gap: 5px;
     }
     
-    .categories-grid {
-        grid-template-columns: 1fr;
+    .page-number {
+        min-width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
     }
     
-    .articles-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .category-tags {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .category-tag {
-        width: 100%;
-        max-width: 300px;
-        justify-content: center;
-    }
-    
-    .newsletter-card {
-        padding: 40px 20px;
-    }
-    
-    .newsletter-form {
-        flex-direction: column;
-    }
-    
-    .newsletter-input,
-    .newsletter-btn {
-        width: 100%;
-    }
-    
-    .section-title {
-        font-size: 1.5rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .hero-title {
-        font-size: 2.2rem;
-    }
-    
-    .breaking-news-card {
-        flex-direction: column;
-    }
-    
-    .breaking-image {
-        height: 180px;
-    }
-    
-    .newsletter-content h3 {
-        font-size: 2rem;
-    }
-}
-</style>
-
-<script>
-// Add hover effect for cards
-document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.article-card, .breaking-news-card, .category-app');
-    
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.zIndex = '10';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.zIndex = '1';
-        });
-    });
-    
-    // Auto-refresh breaking news badge
-    const breakingBadges = document.querySelectorAll('.breaking-badge');
-    breakingBadges.forEach(badge => {
-        setInterval(() => {
-            badge.style.opacity = badge.style.opacity === '0.7' ? '1' : '0.7';
-        }, 1000);
-    });
-    
-    // Newsletter form submission (placeholder)
-    const newsletterForm = document.querySelector('.newsletter-form');
-    if (newsletterForm) {
-        newsletterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const emailInput = this.querySelector('.newsletter-input');
-            if (emailInput.value) {
-                alert('Thank you for subscribing! You will receive updates soon.');
-                emailInput.value = '';
-            }
-        });
-    }
-});
-</script>
-{% endblock %}
+    .pagination-btn {
+        width: 35px;
+        height:
