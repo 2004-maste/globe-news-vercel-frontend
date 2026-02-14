@@ -489,6 +489,17 @@ def sitemap():
     xml += '</urlset>'
     return Response(xml, mimetype='application/xml')
 
+@app.route('/robots.txt')
+def robots():
+    """Serve robots.txt for search engines"""
+    from flask import Response
+    
+    robots_txt = """User-agent: *
+Allow: /
+Sitemap: https://globe-news-jade.vercel.app/sitemap.xml
+"""
+    return Response(robots_txt, mimetype='text/plain')
+
 if __name__ == '__main__':
     print("\n" + "="*60)
     print("🌐 GLOBE NEWS FRONTEND - Starting Server")
