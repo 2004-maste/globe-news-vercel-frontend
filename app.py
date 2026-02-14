@@ -446,6 +446,83 @@ def internal_server_error(e):
                           message="Internal server error",
                           error_code=500), 500
 
+@app.route('/sitemap.xml')
+def sitemap():
+    """Generate sitemap.xml for search engines"""
+    from urllib.parse import urljoin
+    from flask import make_response
+    
+    # Base URL
+    base_url = 'https://globe-news-jade.vercel.app'
+    
+    # Start XML
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    
+    # Static pages (highest priority)
+    static_pages = [
+        {'loc': '/', 'priority': '1.0', 'changefreq': 'hourly'},
+        {'loc': '/breaking', 'priority': '0.9', 'changefreq': 'hourly'},
+        {'loc': '/categories', 'priority': '0.8', 'changefreq': 'daily'},
+        {'loc': '/search', 'priority': '0.5', 'changefreq': 'monthly'}
+    ]
+    
+    for page in static_pages:
+        xml += '  <url>\n'
+        xml += f'    <loc>{base_url}{page["loc"]}</loc>\n'
+        xml += f'    <changefreq>{page["changefreq"]}</changefreq>\n'
+        xml += f'    <priority>{page["priority"]}</priority>\n'
+        xml += '  </url>\n'
+    
+    # Category pages - fetch from backend
+    try:
+        categories = fetch_categories()
+        for category in categories:
+            category_name = category.get('name', '')
+            if category_name:
+                xml += '  <url>\n'
+                xml += f'    <loc>{base_url}/category/{category_name}</loc>\n'
+                xml += f'    <changefreq>daily</changefreq>\n'
+                xml += f'    <priority>0.7</priority>\n'
+                xml += '  </url>\n'
+    except:
+        pass  # Skip categories if backend fails
+    
+    # Article pages - fetch latest articles to get IDs
+    try:
+        # Fetch multiple pages of articles to get all IDs
+        all_articles = []
+        page = 1
+        while True:
+            params = {'limit': 100, 'skip': (page-1)*100}
+            data = fetch_articles(params)
+            articles = data.get('articles', [])
+            if not articles:
+                break
+            all_articles.extend(articles)
+            page += 1
+            if page > 20:  # Safety limit (2000 articles)
+                break
+        
+        # Add each article to sitemap
+        for article in all_articles:
+            article_id = article.get('id')
+            if article_id:
+                xml += '  <url>\n'
+                xml += f'    <loc>{base_url}/article/{article_id}</loc>\n'
+                xml += f'    <changefreq>weekly</changefreq>\n'
+                xml += f'    <priority>0.6</priority>\n'
+                xml += '  </url>\n'
+    except:
+        pass  # Skip articles if backend fails
+    
+    xml += '</urlset>'
+    
+    # Return as XML
+    response = make_response(xml)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
 if __name__ == '__main__':
     print("\n" + "="*60)
     print("🌐 GLOBE NEWS FRONTEND - Starting Server")
