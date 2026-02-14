@@ -1058,4 +1058,101 @@
     
     .pagination-btn {
         width: 35px;
-        height:
+        height: 35px;
+    }
+    
+    .jump-form {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .newsletter-card {
+        padding: 40px 20px;
+    }
+    
+    .newsletter-form {
+        flex-direction: column;
+    }
+    
+    .newsletter-input,
+    .newsletter-btn {
+        width: 100%;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .pagination-info {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 2.2rem;
+    }
+    
+    .page-number {
+        min-width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+    
+    .pagination-btn {
+        width: 30px;
+        height: 30px;
+    }
+}
+</style>
+
+<script>
+// Add hover effect for cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.article-card, .breaking-news-card, .category-app');
+    
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.zIndex = '10';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.zIndex = '1';
+        });
+    });
+    
+    // Auto-refresh breaking news badge
+    const breakingBadges = document.querySelectorAll('.breaking-badge');
+    breakingBadges.forEach(badge => {
+        setInterval(() => {
+            badge.style.opacity = badge.style.opacity === '0.7' ? '1' : '0.7';
+        }, 1000);
+    });
+    
+    // Newsletter form submission (placeholder)
+    const newsletterForm = document.querySelector('.newsletter-form');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const emailInput = this.querySelector('.newsletter-input');
+            if (emailInput.value) {
+                alert('Thank you for subscribing! You will receive updates soon.');
+                emailInput.value = '';
+            }
+        });
+    }
+    
+    // Smooth scroll to latest news when clicking "Read Latest News"
+    const readLatestBtn = document.querySelector('a[href="#latest-news"]');
+    if (readLatestBtn) {
+        readLatestBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('#latest-news').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
