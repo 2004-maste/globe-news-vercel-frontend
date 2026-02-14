@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://globe-news-jade.vercel.app/sitemap.xml
