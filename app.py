@@ -196,40 +196,27 @@ def trigger_fetch():
 
 @app.route('/')
 def index():
-    """Homepage - Latest news with pagination."""
-    # Get parameters
+    """Homepage - Latest news with 60 articles"""
     language = request.args.get('language', 'all')
-    page = request.args.get('page', 1, type=int)
-    limit = 12  # Articles per page (adjust as needed)
+    page = request.args.get('page', 1, type=int)  # Add page parameter
+    limit = 60  # Changed from 24 to 60
     skip = (page - 1) * limit
     
-    # Fetch latest articles with pagination
-    params = {
-        'limit': limit,
-        'skip': skip,
+    articles_data = fetch_articles({
+        'limit': limit, 
+        'skip': skip,  # Add pagination
         'language': language
-    }
-    
-    articles_data = fetch_articles(params)
+    })
     articles = articles_data.get('articles', [])
     total_articles = articles_data.get('total', 0)
-    
-    # Calculate total pages
     total_pages = (total_articles + limit - 1) // limit
     
-    # Fetch breaking news (always latest, not paginated)
     breaking_data = fetch_breaking_articles()
     breaking_articles = breaking_data.get('articles', [])[:5]
     
-    # Fetch categories with article counts
     categories = fetch_categories()
     for category in categories:
-        cat_params = {
-            'category': category['name'], 
-            'limit': 1,
-            'language': language if language != 'all' else None
-        }
-        cat_data = fetch_articles({k: v for k, v in cat_params.items() if v is not None})
+        cat_data = fetch_articles({'category': category['name'], 'limit': 1})
         category['article_count'] = cat_data.get('total', 0)
     
     return render_template(
