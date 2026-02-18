@@ -2,6 +2,16 @@
 
 {% block title %}{{ article.title }} - Globe News{% endblock %}
 
+{% block meta_description %}
+{%- if article.human_summary -%}
+{{ article.human_summary|truncate(160) }}
+{%- elif article.preview_content -%}
+{{ article.preview_content|striptags|truncate(160) }}
+{%- else -%}
+{{ article.description|truncate(160) }}
+{%- endif -%}
+{% endblock %}
+
 {% block breadcrumb %}
 <div class="breadcrumb-wrapper">
     <div class="container">
@@ -80,10 +90,17 @@
                 </span>
                 {% endif %}
 
-                <!-- NEW: Human Summary Badge -->
+                <!-- Human Summary Badge -->
                 {% if article.human_summary %}
                 <span class="badge badge-human-summary" title="This article has an editor's summary">
                     <i class="fas fa-pen-fancy"></i> Editor's Pick
+                </span>
+                {% endif %}
+                
+                <!-- AI Preview Badge -->
+                {% if not article.human_summary and (article.preview_content or preview_html) %}
+                <span class="badge badge-ai-preview" title="AI-generated preview">
+                    <i class="fas fa-robot"></i> AI Analysis
                 </span>
                 {% endif %}
             </div>
@@ -140,7 +157,7 @@
     <div class="content-grid">
         <!-- Main Content Column -->
         <div class="main-content-column">
-            <!-- NEW: HUMAN SUMMARY SECTION - PRIORITY DISPLAY -->
+            <!-- HUMAN SUMMARY SECTION - PRIORITY 1 -->
             {% if article.human_summary %}
             <div class="content-card human-summary-card">
                 <div class="card-header">
@@ -149,6 +166,12 @@
                     </div>
                     <h2 class="header-title">Editor's Summary</h2>
                     <span class="header-badge">Human-Written</span>
+                    
+                    <div class="header-actions">
+                        <span class="badge badge-editor" title="Reviewed by editorial team">
+                            <i class="fas fa-check-circle"></i> Verified
+                        </span>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="human-summary-content">
@@ -159,7 +182,8 @@
                                 <i class="fas fa-user-edit"></i> Globe News Editorial Team
                             </span>
                             <span class="summary-date">
-                                <i class="far fa-calendar-check"></i> Updated: {{ article.approved_at|datetimeformat('%B %d, %Y') if article.approved_at else 'Recently' }}
+                                <i class="far fa-calendar-check"></i> 
+                                Updated: {{ article.approved_at|datetimeformat('%B %d, %Y') if article.approved_at else 'Recently' }}
                             </span>
                         </div>
                     </div>
@@ -167,31 +191,14 @@
             </div>
             {% endif %}
 
-            <!-- Article Description -->
-            {% if article.description %}
-            <div class="content-card description-card">
-                <div class="card-header">
-                    <div class="header-icon">
-                        <i class="fas fa-newspaper"></i>
-                    </div>
-                    <h2 class="header-title">Article Summary</h2>
-                </div>
-                <div class="card-body">
-                    <div class="description-content">
-                        {{ article.description|safe }}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- Content Preview Section - Only show if NO human summary OR if preview exists -->
+            <!-- AI PREVIEW SECTION - PRIORITY 2 (only shown if no human summary) -->
             {% if not article.human_summary and preview_html %}
             <div class="content-card preview-card">
                 <div class="card-header">
                     <div class="header-icon">
-                        <i class="fas fa-chart-bar"></i>
+                        <i class="fas fa-robot"></i>
                     </div>
-                    <h2 class="header-title">Content Analysis</h2>
+                    <h2 class="header-title">AI Content Analysis</h2>
                     <span class="header-badge">AI-Generated</span>
                     
                     <div class="header-actions">
@@ -218,9 +225,38 @@
                         <div class="preview-footer">
                             <span class="preview-note">
                                 <i class="fas fa-robot"></i> AI-generated preview
+                                {% if needs_regeneration %}
+                                <span class="preview-warning">(may need refresh)</span>
+                                {% endif %}
                             </span>
                         </div>
                     </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Article Description (only if no other summaries) -->
+            {% if not article.human_summary and not preview_html and article.description %}
+            <div class="content-card description-card">
+                <div class="card-header">
+                    <div class="header-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h2 class="header-title">Article Summary</h2>
+                    <span class="header-badge">RSS Feed</span>
+                </div>
+                <div class="card-body">
+                    <div class="description-content">
+                        {{ article.description|safe }}
+                    </div>
+                    {% if needs_regeneration %}
+                    <div class="description-footer">
+                        <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-robot"></i> Generate AI Preview
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
@@ -283,7 +319,7 @@
                     </button>
                     
                     {% if not article.human_summary %}
-                    <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" class="action-item">
+                    <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" class="action-item regenerate-btn">
                         <div class="action-icon">
                             <i class="fas fa-sync-alt"></i>
                         </div>
@@ -306,41 +342,53 @@
                             {% if has_full_content %}Full Article{% else %}RSS Summary{% endif %}
                         </span>
                     </div>
-                    <!-- NEW: Human Summary Indicator -->
+                    
+                    <!-- Summary Type Indicator -->
                     <div class="stat-item">
                         <span class="stat-label">Summary Type</span>
                         <span class="stat-value">
                             {% if article.human_summary %}
                             <span class="text-warning"><i class="fas fa-pen-fancy"></i> Human-Written</span>
-                            {% elif article.preview_content %}
+                            {% elif article.preview_content or preview_html %}
                             <span class="text-info"><i class="fas fa-robot"></i> AI-Generated</span>
                             {% else %}
-                            <span class="text-secondary">RSS Only</span>
+                            <span class="text-secondary"><i class="fas fa-rss"></i> RSS Only</span>
                             {% endif %}
                         </span>
                     </div>
+                    
                     {% if content_length %}
                     <div class="stat-item">
                         <span class="stat-label">Length</span>
                         <span class="stat-value">{{ content_length }} chars</span>
                     </div>
                     {% endif %}
+                    
                     <div class="stat-item">
                         <span class="stat-label">Language</span>
                         <span class="stat-value">{{ article.language|upper }}</span>
                     </div>
+                    
                     <div class="stat-item">
                         <span class="stat-label">Category</span>
                         <span class="stat-value">{{ article.category_name }}</span>
                     </div>
+                    
                     <div class="stat-item">
                         <span class="stat-label">Article ID</span>
                         <span class="stat-value">#{{ article.id }}</span>
                     </div>
+                    
+                    {% if article.approved_at %}
+                    <div class="stat-item">
+                        <span class="stat-label">Reviewed</span>
+                        <span class="stat-value">{{ article.approved_at|datetimeformat('%b %d, %Y') }}</span>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
-            <!-- NEW: About Our Summaries Card -->
+            <!-- About Our Summaries Card -->
             <div class="sidebar-card info-card">
                 <h3 class="sidebar-title">About Our Summaries</h3>
                 <div class="info-content">
@@ -351,6 +399,10 @@
                     <p class="info-text">
                         <i class="fas fa-robot text-info"></i> 
                         <strong>AI-Generated:</strong> Automated previews for quick understanding.
+                    </p>
+                    <p class="info-text">
+                        <i class="fas fa-rss text-secondary"></i> 
+                        <strong>RSS Only:</strong> Original feed summary, no additional analysis.
                     </p>
                     <p class="info-text mt-2 small text-muted">
                         Human summaries represent our editorial team's analysis and are updated regularly.
@@ -440,10 +492,14 @@
                     </div>
                     {% endif %}
                     
-                    <!-- NEW: Show if related article has human summary -->
+                    <!-- Show if related article has human summary -->
                     {% if related.human_summary %}
                     <div class="related-badge" title="Has editor's summary">
                         <i class="fas fa-pen-fancy"></i>
+                    </div>
+                    {% elif related.preview_content %}
+                    <div class="related-badge ai-badge" title="Has AI preview">
+                        <i class="fas fa-robot"></i>
                     </div>
                     {% endif %}
                 </div>
@@ -485,7 +541,7 @@
     </div>
 </div>
 
-<!-- NEW: Schema.org markup for rich results with human summary -->
+<!-- Schema.org markup for rich results with human summary -->
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
@@ -507,7 +563,7 @@
             "url": "https://globe-news-jade.vercel.app/static/images/logo.png"
         }
     },
-    "description": "{% if article.human_summary %}{{ article.human_summary }}{% elif article.preview_content %}{{ article.preview_content }}{% else %}{{ article.description }}{% endif %}",
+    "description": "{% if article.human_summary %}{{ article.human_summary|escape }}{% elif article.preview_content %}{{ article.preview_content|striptags|escape }}{% else %}{{ article.description|escape }}{% endif %}",
     "mainEntityOfPage": "{{ request.url }}",
     "keywords": "{{ article.category_name }}, {{ article.source }}, news"
 }
@@ -516,7 +572,7 @@
 
 {% block scripts %}
 <script>
-    // Toast Notification System (unchanged)
+    // Toast Notification System
     class ToastManager {
         constructor() {
             this.container = document.createElement('div');
@@ -556,12 +612,14 @@
     // Share Article Function
     async function shareArticle() {
         try {
+            const shareData = {
+                title: '{{ article.title|escape }}',
+                text: '{% if article.human_summary %}{{ article.human_summary|escape }}{% else %}Check out this article on Globe News{% endif %}',
+                url: window.location.href
+            };
+            
             if (navigator.share) {
-                await navigator.share({
-                    title: '{{ article.title }}',
-                    text: '{% if article.human_summary %}{{ article.human_summary }}{% else %}Check out this article on Globe News{% endif %}',
-                    url: window.location.href
-                });
+                await navigator.share(shareData);
                 toast.show('Article shared successfully!');
             } else {
                 // Fallback: Copy to clipboard
@@ -665,7 +723,7 @@
             });
         });
 
-        // NEW: Highlight human summary if present
+        // Highlight human summary if present
         const humanSummary = document.querySelector('.human-summary-card');
         if (humanSummary) {
             humanSummary.classList.add('highlight-card');
@@ -704,47 +762,6 @@
         }
     });
     
-    // Lazy load related images
-    if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    imageObserver.unobserve(img);
-                }
-            });
-        });
-        
-        document.querySelectorAll('.related-image[data-src]').forEach(img => {
-            imageObserver.observe(img);
-        });
-    }
-    
-    // Backend Health Check
-    async function checkBackendHealth() {
-        try {
-            const response = await fetch('/api/health');
-            const data = await response.json();
-            
-            const regenerateBtn = document.querySelector('.regenerate-btn');
-            if (regenerateBtn) {
-                if (data.backend.status !== 'healthy') {
-                    regenerateBtn.classList.add('disabled');
-                    regenerateBtn.title = 'Backend is offline. Cannot generate preview.';
-                    toast.show('Preview generation temporarily unavailable', 'error');
-                }
-            }
-        } catch (error) {
-            console.warn('Backend health check failed:', error);
-        }
-    }
-    
-    // Check backend health on page load if regenerate button exists
-    if (document.querySelector('.regenerate-btn')) {
-        checkBackendHealth();
-    }
-    
     // Reading Progress Indicator
     function updateReadingProgress() {
         const winScroll = document.documentElement.scrollTop;
@@ -763,11 +780,12 @@
     window.addEventListener('scroll', updateReadingProgress);
 </script>
 
-<!-- NEW: Additional CSS for human summary styling -->
+<!-- Additional CSS for human summary styling -->
 <style>
     .human-summary-card {
         border-left: 4px solid #fbbf24;
         background: linear-gradient(to right, rgba(251, 191, 36, 0.05), transparent);
+        margin-bottom: 2rem;
     }
     
     .human-summary-content {
@@ -810,6 +828,20 @@
     .badge-human-summary {
         background: linear-gradient(135deg, #fbbf24, #f59e0b);
         color: #111827;
+        border: none;
+        padding: 0.35rem 0.75rem;
+    }
+    
+    .badge-ai-preview {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+    }
+    
+    .badge-editor {
+        background-color: #10b981;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
     }
     
     .highlight-card {
@@ -848,22 +880,62 @@
         z-index: 2;
     }
     
+    .related-badge.ai-badge {
+        background: #3b82f6;
+        color: white;
+    }
+    
     .text-warning {
         color: #fbbf24 !important;
     }
     
+    .text-info {
+        color: #3b82f6 !important;
+    }
+    
     .info-card {
         background: #1f2937;
+        border-radius: 0.75rem;
     }
     
     .info-text {
         margin-bottom: 0.75rem;
         line-height: 1.6;
         font-size: 0.9rem;
+        color: #d1d5db;
     }
     
     .info-text i {
         width: 1.25rem;
+    }
+    
+    .preview-warning {
+        color: #f59e0b;
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+    }
+    
+    .description-footer {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #374151;
+        text-align: center;
+    }
+    
+    /* Loading state for regenerate button */
+    .regenerate-btn.loading {
+        opacity: 0.7;
+        cursor: wait;
+        pointer-events: none;
+    }
+    
+    .regenerate-btn.loading .action-icon i {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 </style>
 {% endblock %}
