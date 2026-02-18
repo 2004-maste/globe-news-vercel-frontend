@@ -54,25 +54,6 @@
     </div>
     {% endif %}
     
-    <!-- Preview Regeneration Banner -->
-    {% if needs_regeneration %}
-    <div class="alert info-alert regenerate-banner" role="alert">
-        <div class="alert-icon">
-            <i class="fas fa-sync-alt"></i>
-        </div>
-        <div class="alert-content d-flex justify-between align-center flex-wrap">
-            <div>
-                <strong>Preview Update Available</strong>
-                <p class="mt-1 mb-0">Regenerate to include full article content analysis.</p>
-            </div>
-            <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
-               class="btn btn-primary btn-sm regenerate-btn">
-                <i class="fas fa-magic"></i> Regenerate Preview
-            </a>
-        </div>
-    </div>
-    {% endif %}
-    
     <!-- Article Header -->
     <div class="article-header-wrapper">
         <div class="article-meta-top">
@@ -96,6 +77,13 @@
                 {% if has_full_content %}
                 <span class="badge badge-full-content">
                     <i class="fas fa-check-circle"></i> Full Analysis
+                </span>
+                {% endif %}
+
+                <!-- NEW: Human Summary Badge -->
+                {% if article.human_summary %}
+                <span class="badge badge-human-summary" title="This article has an editor's summary">
+                    <i class="fas fa-pen-fancy"></i> Editor's Pick
                 </span>
                 {% endif %}
             </div>
@@ -152,6 +140,33 @@
     <div class="content-grid">
         <!-- Main Content Column -->
         <div class="main-content-column">
+            <!-- NEW: HUMAN SUMMARY SECTION - PRIORITY DISPLAY -->
+            {% if article.human_summary %}
+            <div class="content-card human-summary-card">
+                <div class="card-header">
+                    <div class="header-icon">
+                        <i class="fas fa-pen-fancy text-warning"></i>
+                    </div>
+                    <h2 class="header-title">Editor's Summary</h2>
+                    <span class="header-badge">Human-Written</span>
+                </div>
+                <div class="card-body">
+                    <div class="human-summary-content">
+                        <div class="summary-quote-mark"><i class="fas fa-quote-left"></i></div>
+                        <p class="summary-text">{{ article.human_summary }}</p>
+                        <div class="summary-footer">
+                            <span class="summary-author">
+                                <i class="fas fa-user-edit"></i> Globe News Editorial Team
+                            </span>
+                            <span class="summary-date">
+                                <i class="far fa-calendar-check"></i> Updated: {{ article.approved_at|datetimeformat('%B %d, %Y') if article.approved_at else 'Recently' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Article Description -->
             {% if article.description %}
             <div class="content-card description-card">
@@ -169,24 +184,21 @@
             </div>
             {% endif %}
             
-            <!-- Content Preview Section -->
+            <!-- Content Preview Section - Only show if NO human summary OR if preview exists -->
+            {% if not article.human_summary and preview_html %}
             <div class="content-card preview-card">
                 <div class="card-header">
                     <div class="header-icon">
                         <i class="fas fa-chart-bar"></i>
                     </div>
                     <h2 class="header-title">Content Analysis</h2>
-                    {% if preview_html %}
-                    <span class="header-badge">Enhanced Preview</span>
-                    {% endif %}
+                    <span class="header-badge">AI-Generated</span>
                     
                     <div class="header-actions">
-                        {% if preview_html %}
                         <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
                            class="btn-icon" title="Regenerate Preview">
                             <i class="fas fa-redo-alt"></i>
                         </a>
-                        {% endif %}
                         
                         <a href="{{ article.url }}" 
                            target="_blank" 
@@ -198,7 +210,6 @@
                 </div>
                 
                 <div class="card-body">
-                    {% if preview_html %}
                     <div class="preview-content-wrapper">
                         <div class="preview-content">
                             {{ preview_html|safe }}
@@ -206,27 +217,13 @@
                         
                         <div class="preview-footer">
                             <span class="preview-note">
-                                <i class="fas fa-robot"></i> AI-generated analysis
+                                <i class="fas fa-robot"></i> AI-generated preview
                             </span>
                         </div>
                     </div>
-                    {% else %}
-                    <div class="empty-preview">
-                        <div class="empty-state-icon">
-                            <i class="fas fa-analytics"></i>
-                        </div>
-                        <h3 class="empty-state-title">No Preview Available</h3>
-                        <p class="empty-state-text">
-                            This article hasn't been analyzed yet. Generate a preview to see key insights and analysis.
-                        </p>
-                        <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
-                           class="btn btn-primary">
-                            <i class="fas fa-magic"></i> Generate Preview
-                        </a>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
+            {% endif %}
             
             <!-- Full Article Content -->
             {% if article.content and article.content|length > 100 %}
@@ -285,15 +282,17 @@
                         </div>
                     </button>
                     
+                    {% if not article.human_summary %}
                     <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" class="action-item">
                         <div class="action-icon">
                             <i class="fas fa-sync-alt"></i>
                         </div>
                         <div class="action-info">
-                            <span class="action-label">Refresh</span>
+                            <span class="action-label">Refresh AI</span>
                             <span class="action-desc">Update analysis</span>
                         </div>
                     </a>
+                    {% endif %}
                 </div>
             </div>
             
@@ -305,6 +304,19 @@
                         <span class="stat-label">Content Type</span>
                         <span class="stat-value">
                             {% if has_full_content %}Full Article{% else %}RSS Summary{% endif %}
+                        </span>
+                    </div>
+                    <!-- NEW: Human Summary Indicator -->
+                    <div class="stat-item">
+                        <span class="stat-label">Summary Type</span>
+                        <span class="stat-value">
+                            {% if article.human_summary %}
+                            <span class="text-warning"><i class="fas fa-pen-fancy"></i> Human-Written</span>
+                            {% elif article.preview_content %}
+                            <span class="text-info"><i class="fas fa-robot"></i> AI-Generated</span>
+                            {% else %}
+                            <span class="text-secondary">RSS Only</span>
+                            {% endif %}
                         </span>
                     </div>
                     {% if content_length %}
@@ -325,6 +337,24 @@
                         <span class="stat-label">Article ID</span>
                         <span class="stat-value">#{{ article.id }}</span>
                     </div>
+                </div>
+            </div>
+            
+            <!-- NEW: About Our Summaries Card -->
+            <div class="sidebar-card info-card">
+                <h3 class="sidebar-title">About Our Summaries</h3>
+                <div class="info-content">
+                    <p class="info-text">
+                        <i class="fas fa-pen-fancy text-warning"></i> 
+                        <strong>Human-Written:</strong> Curated by our editorial team for accuracy and insight.
+                    </p>
+                    <p class="info-text">
+                        <i class="fas fa-robot text-info"></i> 
+                        <strong>AI-Generated:</strong> Automated previews for quick understanding.
+                    </p>
+                    <p class="info-text mt-2 small text-muted">
+                        Human summaries represent our editorial team's analysis and are updated regularly.
+                    </p>
                 </div>
             </div>
             
@@ -409,6 +439,13 @@
                         <i class="fas fa-newspaper"></i>
                     </div>
                     {% endif %}
+                    
+                    <!-- NEW: Show if related article has human summary -->
+                    {% if related.human_summary %}
+                    <div class="related-badge" title="Has editor's summary">
+                        <i class="fas fa-pen-fancy"></i>
+                    </div>
+                    {% endif %}
                 </div>
                 
                 <div class="related-content">
@@ -437,7 +474,7 @@
     <div class="article-footer">
         <div class="footer-content">
             <span class="footer-copyright">
-                © 2026 Globe News | Powered by Master V Labs
+                © 2026 Globe News | Powered by Master V Labs, Kigali
             </span>
             <div class="footer-actions">
                 <button class="footer-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
@@ -447,11 +484,39 @@
         </div>
     </div>
 </div>
+
+<!-- NEW: Schema.org markup for rich results with human summary -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": "{{ article.title }}",
+    "image": "{{ article.url_to_image or 'https://globe-news-jade.vercel.app/static/images/default-news.jpg' }}",
+    "datePublished": "{{ article.published_at.isoformat() if article.published_at }}",
+    "dateModified": "{{ article.approved_at.isoformat() if article.approved_at else article.published_at.isoformat() if article.published_at }}",
+    "author": [{
+        "@type": "Organization",
+        "name": "{{ article.source }}",
+        "url": "{{ article.url.split('/')[0:3]|join('/') }}"
+    }],
+    "publisher": {
+        "@type": "Organization",
+        "name": "Globe News",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://globe-news-jade.vercel.app/static/images/logo.png"
+        }
+    },
+    "description": "{% if article.human_summary %}{{ article.human_summary }}{% elif article.preview_content %}{{ article.preview_content }}{% else %}{{ article.description }}{% endif %}",
+    "mainEntityOfPage": "{{ request.url }}",
+    "keywords": "{{ article.category_name }}, {{ article.source }}, news"
+}
+</script>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Toast Notification System
+    // Toast Notification System (unchanged)
     class ToastManager {
         constructor() {
             this.container = document.createElement('div');
@@ -494,7 +559,7 @@
             if (navigator.share) {
                 await navigator.share({
                     title: '{{ article.title }}',
-                    text: 'Check out this article on Globe News',
+                    text: '{% if article.human_summary %}{{ article.human_summary }}{% else %}Check out this article on Globe News{% endif %}',
                     url: window.location.href
                 });
                 toast.show('Article shared successfully!');
@@ -551,7 +616,7 @@
             });
         });
         
-        // Enhance preview content links
+        // Enhance preview content links (if preview exists)
         document.querySelectorAll('.preview-content a').forEach(link => {
             link.setAttribute('target', '_blank');
             link.setAttribute('rel', 'noopener noreferrer nofollow');
@@ -599,6 +664,16 @@
                 }, { once: true });
             });
         });
+
+        // NEW: Highlight human summary if present
+        const humanSummary = document.querySelector('.human-summary-card');
+        if (humanSummary) {
+            humanSummary.classList.add('highlight-card');
+            // Add subtle animation
+            setTimeout(() => {
+                humanSummary.classList.add('fade-in');
+            }, 100);
+        }
     });
     
     // Keyboard Shortcuts
@@ -665,7 +740,7 @@
         }
     }
     
-    // Check backend health on page load
+    // Check backend health on page load if regenerate button exists
     if (document.querySelector('.regenerate-btn')) {
         checkBackendHealth();
     }
@@ -687,4 +762,108 @@
     
     window.addEventListener('scroll', updateReadingProgress);
 </script>
+
+<!-- NEW: Additional CSS for human summary styling -->
+<style>
+    .human-summary-card {
+        border-left: 4px solid #fbbf24;
+        background: linear-gradient(to right, rgba(251, 191, 36, 0.05), transparent);
+    }
+    
+    .human-summary-content {
+        position: relative;
+        padding: 1rem 1.5rem;
+    }
+    
+    .summary-quote-mark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-size: 2rem;
+        color: #fbbf24;
+        opacity: 0.3;
+    }
+    
+    .summary-text {
+        font-size: 1.25rem;
+        line-height: 1.8;
+        font-style: italic;
+        color: #e5e7eb;
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+    }
+    
+    .summary-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid #374151;
+        font-size: 0.875rem;
+        color: #9ca3af;
+    }
+    
+    .summary-author i, .summary-date i {
+        margin-right: 0.25rem;
+    }
+    
+    .badge-human-summary {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: #111827;
+    }
+    
+    .highlight-card {
+        animation: cardGlow 2s ease-in-out;
+    }
+    
+    @keyframes cardGlow {
+        0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5); }
+        50% { box-shadow: 0 0 20px 0 rgba(251, 191, 36, 0.3); }
+        100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .related-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #fbbf24;
+        color: #111827;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 2;
+    }
+    
+    .text-warning {
+        color: #fbbf24 !important;
+    }
+    
+    .info-card {
+        background: #1f2937;
+    }
+    
+    .info-text {
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+        font-size: 0.9rem;
+    }
+    
+    .info-text i {
+        width: 1.25rem;
+    }
+</style>
 {% endblock %}
