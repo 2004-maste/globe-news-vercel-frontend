@@ -1,6 +1,6 @@
 """
 Globe News Frontend - Complete Version
-Connected to Backend v6.1 with Full Content Extraction
+Connected to Backend v6.1 with Full Content Extraction & Human Summaries
 """
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for
@@ -9,12 +9,19 @@ from datetime import datetime
 import html
 import re
 import os
+import logging
 
 app = Flask(__name__)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Backend API configuration
 BACKEND_URL = os.environ.get('BACKEND_URL', 'https://p01--backend-api--5pt6gkpwq49b.code.run')
 API_VERSION = "v1"
+
+# ==================== TEMPLATE FILTERS ====================
 
 @app.template_filter('datetimeformat')
 def datetimeformat(value, format='%b %d, %Y %H:%M'):
@@ -24,6 +31,20 @@ def datetimeformat(value, format='%b %d, %Y %H:%M'):
     try:
         dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
         return dt.strftime(format)
+    except:
+        return value
+
+@app.template_filter('format_date')
+def format_date(value):
+    """Format date for display (simpler version)."""
+    if not value:
+        return "Unknown date"
+    try:
+        if 'T' in value:
+            dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        else:
+            dt = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+        return dt.strftime('%b %d, %Y')
     except:
         return value
 
@@ -123,7 +144,7 @@ def fetch_articles(params=None):
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching articles: {e}")
+        logger.error(f"Error fetching articles: {e}")
         return {"articles": [], "total": 0}
 
 def fetch_article(article_id):
@@ -132,9 +153,21 @@ def fetch_article(article_id):
         url = f"{BACKEND_URL}/api/{API_VERSION}/articles/{article_id}"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        
+        # Ensure all expected fields exist
+        if 'human_summary' not in data:
+            data['human_summary'] = None
+        if 'preview_content' not in data:
+            data['preview_content'] = None
+        if 'full_content' not in data:
+            data['full_content'] = None
+        if 'category_name' not in data:
+            data['category_name'] = 'General'
+            
+        return data
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching article {article_id}: {e}")
+        logger.error(f"Error fetching article {article_id}: {e}")
         return None
 
 def fetch_categories():
@@ -145,7 +178,7 @@ def fetch_categories():
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching categories: {e}")
+        logger.error(f"Error fetching categories: {e}")
         return []
 
 def fetch_breaking_articles():
@@ -156,7 +189,7 @@ def fetch_breaking_articles():
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching breaking articles: {e}")
+        logger.error(f"Error fetching breaking articles: {e}")
         return {"articles": []}
 
 def fetch_preview(article_id):
@@ -167,7 +200,7 @@ def fetch_preview(article_id):
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching preview for article {article_id}: {e}")
+        logger.error(f"Error fetching preview for article {article_id}: {e}")
         return None
 
 def generate_preview(article_id):
@@ -178,7 +211,7 @@ def generate_preview(article_id):
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error generating preview for article {article_id}: {e}")
+        logger.error(f"Error generating preview for article {article_id}: {e}")
         return None
 
 def trigger_fetch():
@@ -189,7 +222,7 @@ def trigger_fetch():
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error triggering fetch: {e}")
+        logger.error(f"Error triggering fetch: {e}")
         return {"message": "Error triggering fetch"}
 
 # ==================== ROUTES ====================
@@ -198,13 +231,13 @@ def trigger_fetch():
 def index():
     """Homepage - Latest news with 60 articles"""
     language = request.args.get('language', 'all')
-    page = request.args.get('page', 1, type=int)  # Add page parameter
-    limit = 60  # Changed from 24 to 60
+    page = request.args.get('page', 1, type=int)
+    limit = 60
     skip = (page - 1) * limit
     
     articles_data = fetch_articles({
         'limit': limit, 
-        'skip': skip,  # Add pagination
+        'skip': skip,
         'language': language
     })
     articles = articles_data.get('articles', [])
@@ -233,50 +266,74 @@ def index():
 
 @app.route('/article/<int:article_id>')
 def article_detail(article_id):
-    """Article detail page with preview."""
-    # Fetch article
-    article = fetch_article(article_id)
-    
-    if not article:
+    """Article detail page with human summary support."""
+    try:
+        # Fetch article
+        article = fetch_article(article_id)
+        
+        if not article:
+            logger.warning(f"Article {article_id} not found")
+            return render_template('error.html', 
+                                 message="Article not found",
+                                 error_code=404), 404
+        
+        # Fetch preview
+        preview_data = fetch_preview(article_id)
+        
+        # Check if article has full content
+        has_full_content = article.get('has_full_content', False)
+        content_length = article.get('content_length', 0)
+        
+        # Determine which preview to show (human summary takes priority)
+        preview_html = None
+        preview_type = None
+        
+        # PRIORITY 1: Human summary (from admin)
+        if article.get('human_summary'):
+            preview_html = article['human_summary']
+            preview_type = 'human'
+            logger.info(f"Article {article_id}: Using human summary")
+        
+        # PRIORITY 2: AI preview from database
+        elif article.get('preview_content'):
+            preview_html = article['preview_content']
+            preview_type = 'ai'
+            logger.info(f"Article {article_id}: Using AI preview")
+        
+        # PRIORITY 3: Preview from API
+        elif preview_data and preview_data.get('has_preview'):
+            preview_html = preview_data.get('preview')
+            preview_type = 'ai'
+            logger.info(f"Article {article_id}: Using API preview")
+        
+        # Check if preview needs regeneration (only for AI previews, not human)
+        needs_regeneration = False
+        if preview_type == 'ai' and not preview_html:
+            needs_regeneration = True
+        elif not preview_html and not article.get('human_summary'):
+            needs_regeneration = True
+        
+        # Show content warning if no full content
+        content_warning = None
+        if not has_full_content and content_length < 500:
+            content_warning = "⚠️ Limited content available - only RSS summary was fetched"
+        
+        return render_template(
+            'article_detail.html',
+            article=article,
+            preview_html=preview_html,
+            preview_type=preview_type,
+            needs_regeneration=needs_regeneration,
+            has_full_content=has_full_content,
+            content_warning=content_warning,
+            content_length=content_length
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in article_detail for {article_id}: {e}")
         return render_template('error.html', 
-                            message="Article not found",
-                            error_code=404), 404
-    
-    # Fetch preview
-    preview_data = fetch_preview(article_id)
-    
-    # Check if article has full content
-    has_full_content = article.get('has_full_content', False)
-    content_length = article.get('content_length', 0)
-    
-    # Check if preview needs regeneration
-    needs_regeneration = False
-    if preview_data and not preview_data.get('has_preview', False):
-        needs_regeneration = True
-    elif not preview_data:
-        needs_regeneration = True
-    
-    # If preview exists, use it
-    preview_html = None
-    if preview_data and preview_data.get('has_preview'):
-        preview_html = preview_data.get('preview')
-    elif article.get('preview_content'):
-        preview_html = article.get('preview_content')
-    
-    # Show content warning if no full content
-    content_warning = None
-    if not has_full_content and content_length < 500:
-        content_warning = "⚠️ Limited content available - only RSS summary was fetched"
-    
-    return render_template(
-        'article_detail.html',
-        article=article,
-        preview_html=preview_html,
-        needs_regeneration=needs_regeneration,
-        has_full_content=has_full_content,
-        content_warning=content_warning,
-        content_length=content_length
-    )
+                             message="An error occurred loading the article",
+                             error_code=500), 500
 
 @app.route('/article/<int:article_id>/regenerate-preview')
 def regenerate_preview(article_id):
@@ -306,7 +363,7 @@ def categories():
         data = fetch_articles(params)
         category['article_count'] = data.get('total', 0)
     
-    return render_template('category.html', 
+    return render_template('categories.html', 
                          categories=categories_list)
 
 @app.route('/category/<category_name>')
@@ -335,7 +392,7 @@ def category_detail(category_name):
     
     # Get category info
     categories_list = fetch_categories()
-    current_category = next((c for c in categories_list if c['name'] == category_name), None)
+    current_category = next((c for c in categories_list if c['name'].lower() == category_name.lower()), None)
     
     if not current_category:
         return render_template('error.html', 
@@ -555,6 +612,26 @@ def sitemap():
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://globe-news-jade.vercel.app/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://globe-news-jade.vercel.app/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://globe-news-jade.vercel.app/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://globe-news-jade.vercel.app/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
 </urlset>'''
     
     return Response(xml, mimetype='application/xml')
@@ -579,13 +656,14 @@ if __name__ == '__main__':
     print("="*60)
     print(f"📱 Frontend: http://localhost:5000")
     print(f"🔗 Backend: {BACKEND_URL}")
-    print(f"📊 Version: 2.0.0")
+    print(f"📊 Version: 2.1.0 (with Human Summary Support)")
+    print(f"📝 Features: Human summaries, AI previews, Full content extraction")
     print(f"🗺️  Sitemap: https://globe-news-jade.vercel.app/sitemap.xml")
     print(f"🤖 Robots:  https://globe-news-jade.vercel.app/robots.txt")
     print("="*60)
     
     app.run(
         host='0.0.0.0',
-        port=5000,
+        port=int(os.environ.get('PORT', 5000)),
         debug=True
     )
