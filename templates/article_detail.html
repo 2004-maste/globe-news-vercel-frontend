@@ -541,15 +541,15 @@
     </div>
 </div>
 
-<!-- Schema.org markup for rich results with human summary -->
+<!-- FIXED: Schema.org markup for rich results with human summary -->
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     "headline": "{{ article.title }}",
     "image": "{{ article.url_to_image or 'https://globe-news-jade.vercel.app/static/images/default-news.jpg' }}",
-    "datePublished": "{{ article.published_at.isoformat() if article.published_at }}",
-    "dateModified": "{{ article.approved_at.isoformat() if article.approved_at else article.published_at.isoformat() if article.published_at }}",
+    "datePublished": "{{ article.published_at }}",
+    "dateModified": "{{ article.approved_at or article.published_at }}",
     "author": [{
         "@type": "Organization",
         "name": "{{ article.source }}",
