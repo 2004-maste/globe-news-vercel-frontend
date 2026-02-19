@@ -323,10 +323,6 @@
                         <div class="action-icon">
                             <i class="fas fa-sync-alt"></i>
                         </div>
-                        <div class="action-info">
-                            <span class="action-label">Refresh AI</span>
-                            <span class="action-desc">Update analysis</span>
-                        </div>
                     </a>
                     {% endif %}
                 </div>
@@ -343,20 +339,7 @@
                         </span>
                     </div>
                     
-                    <!-- Summary Type Indicator -->
-                    <div class="stat-item">
-                        <span class="stat-label">Summary Type</span>
-                        <span class="stat-value">
-                            {% if article.human_summary %}
-                            <span class="text-warning"><i class="fas fa-pen-fancy"></i> Human-Written</span>
-                            {% elif article.preview_content or preview_html %}
-                            <span class="text-info"><i class="fas fa-robot"></i> AI-Generated</span>
-                            {% else %}
-                            <span class="text-secondary"><i class="fas fa-rss"></i> RSS Only</span>
-                            {% endif %}
-                        </span>
-                    </div>
-                    
+
                     {% if content_length %}
                     <div class="stat-item">
                         <span class="stat-label">Length</span>
@@ -385,28 +368,6 @@
                         <span class="stat-value">{{ article.approved_at|datetimeformat('%b %d, %Y') }}</span>
                     </div>
                     {% endif %}
-                </div>
-            </div>
-            
-            <!-- About Our Summaries Card -->
-            <div class="sidebar-card info-card">
-                <h3 class="sidebar-title">About Our Summaries</h3>
-                <div class="info-content">
-                    <p class="info-text">
-                        <i class="fas fa-pen-fancy text-warning"></i> 
-                        <strong>Human-Written:</strong> Curated by our editorial team for accuracy and insight.
-                    </p>
-                    <p class="info-text">
-                        <i class="fas fa-robot text-info"></i> 
-                        <strong>AI-Generated:</strong> Automated previews for quick understanding.
-                    </p>
-                    <p class="info-text">
-                        <i class="fas fa-rss text-secondary"></i> 
-                        <strong>RSS Only:</strong> Original feed summary, no additional analysis.
-                    </p>
-                    <p class="info-text mt-2 small text-muted">
-                        Human summaries represent our editorial team's analysis and are updated regularly.
-                    </p>
                 </div>
             </div>
             
