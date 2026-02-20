@@ -97,10 +97,10 @@
                 </span>
                 {% endif %}
                 
-                <!-- AI Preview Badge -->
+                <!-- Smart Content Preview Badge (replaced AI) -->
                 {% if not article.human_summary and (article.preview_content or preview_html) %}
-                <span class="badge badge-ai-preview" title="AI-generated preview">
-                    <i class="fas fa-robot"></i> AI Analysis
+                <span class="badge badge-smart-preview" title="Smart Content Preview">
+                    <i class="fas fa-chart-line"></i> Smart Preview
                 </span>
                 {% endif %}
             </div>
@@ -191,15 +191,15 @@
             </div>
             {% endif %}
 
-            <!-- AI PREVIEW SECTION - PRIORITY 2 (only shown if no human summary) -->
+            <!-- SMART CONTENT PREVIEW SECTION - PRIORITY 2 (replaced AI) -->
             {% if not article.human_summary and preview_html %}
             <div class="content-card preview-card">
                 <div class="card-header">
                     <div class="header-icon">
-                        <i class="fas fa-robot"></i>
+                        <i class="fas fa-chart-line"></i>
                     </div>
-                    <h2 class="header-title">AI Content Analysis</h2>
-                    <span class="header-badge">AI-Generated</span>
+                    <h2 class="header-title">Smart Content Preview</h2>
+                    <span class="header-badge">Automated Analysis</span>
                     
                     <div class="header-actions">
                         <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
@@ -224,7 +224,7 @@
                         
                         <div class="preview-footer">
                             <span class="preview-note">
-                                <i class="fas fa-robot"></i> AI-generated preview
+                                <i class="fas fa-chart-line"></i> Smart Content Preview
                                 {% if needs_regeneration %}
                                 <span class="preview-warning">(may need refresh)</span>
                                 {% endif %}
@@ -253,7 +253,7 @@
                     <div class="description-footer">
                         <a href="{{ url_for('regenerate_preview', article_id=article.id) }}" 
                            class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-robot"></i> Generate AI Preview
+                            <i class="fas fa-chart-line"></i> Generate Smart Preview
                         </a>
                     </div>
                     {% endif %}
@@ -323,6 +323,10 @@
                         <div class="action-icon">
                             <i class="fas fa-sync-alt"></i>
                         </div>
+                        <div class="action-info">
+                            <span class="action-label">Refresh</span>
+                            <span class="action-desc">Update preview</span>
+                        </div>
                     </a>
                     {% endif %}
                 </div>
@@ -339,6 +343,19 @@
                         </span>
                     </div>
                     
+                    <!-- Summary Type Indicator (updated terminology) -->
+                    <div class="stat-item">
+                        <span class="stat-label">Preview Type</span>
+                        <span class="stat-value">
+                            {% if article.human_summary %}
+                            <span class="text-warning"><i class="fas fa-pen-fancy"></i> Human-Written</span>
+                            {% elif article.preview_content or preview_html %}
+                            <span class="text-info"><i class="fas fa-chart-line"></i> Smart Preview</span>
+                            {% else %}
+                            <span class="text-secondary"><i class="fas fa-rss"></i> RSS Only</span>
+                            {% endif %}
+                        </span>
+                    </div>
 
                     {% if content_length %}
                     <div class="stat-item">
@@ -368,6 +385,28 @@
                         <span class="stat-value">{{ article.approved_at|datetimeformat('%b %d, %Y') }}</span>
                     </div>
                     {% endif %}
+                </div>
+            </div>
+            
+            <!-- About Our Previews Card (updated terminology) -->
+            <div class="sidebar-card info-card">
+                <h3 class="sidebar-title">About Our Previews</h3>
+                <div class="info-content">
+                    <p class="info-text">
+                        <i class="fas fa-pen-fancy text-warning"></i> 
+                        <strong>Human-Written:</strong> Curated by our editorial team for accuracy and insight.
+                    </p>
+                    <p class="info-text">
+                        <i class="fas fa-chart-line text-info"></i> 
+                        <strong>Smart Preview:</strong> Automated content analysis and key point extraction.
+                    </p>
+                    <p class="info-text">
+                        <i class="fas fa-rss text-secondary"></i> 
+                        <strong>RSS Only:</strong> Original feed summary, no additional analysis.
+                    </p>
+                    <p class="info-text mt-2 small text-muted">
+                        Human summaries represent our editorial team's analysis and are updated regularly.
+                    </p>
                 </div>
             </div>
             
@@ -459,8 +498,8 @@
                         <i class="fas fa-pen-fancy"></i>
                     </div>
                     {% elif related.preview_content %}
-                    <div class="related-badge ai-badge" title="Has AI preview">
-                        <i class="fas fa-robot"></i>
+                    <div class="related-badge smart-badge" title="Has smart preview">
+                        <i class="fas fa-chart-line"></i>
                     </div>
                     {% endif %}
                 </div>
@@ -502,7 +541,7 @@
     </div>
 </div>
 
-<!-- FIXED: Schema.org markup for rich results with human summary -->
+<!-- Schema.org markup for rich results with human summary -->
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
@@ -741,7 +780,7 @@
     window.addEventListener('scroll', updateReadingProgress);
 </script>
 
-<!-- Additional CSS for human summary styling -->
+<!-- Additional CSS for human summary styling (updated with smart preview colors) -->
 <style>
     .human-summary-card {
         border-left: 4px solid #fbbf24;
@@ -793,8 +832,8 @@
         padding: 0.35rem 0.75rem;
     }
     
-    .badge-ai-preview {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
+    .badge-smart-preview {
+        background: linear-gradient(135deg, #10b981, #059669);
         color: white;
     }
     
@@ -841,8 +880,8 @@
         z-index: 2;
     }
     
-    .related-badge.ai-badge {
-        background: #3b82f6;
+    .related-badge.smart-badge {
+        background: #10b981;
         color: white;
     }
     
@@ -851,7 +890,7 @@
     }
     
     .text-info {
-        color: #3b82f6 !important;
+        color: #10b981 !important;
     }
     
     .info-card {
